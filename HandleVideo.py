@@ -24,11 +24,14 @@ def concatenate_videos(video_files):
     final_clip = concatenate_videoclips(clips_with_transitions, method="compose")
 
     # 保存拼接后的视频
-    final_clip.write_videofile("final_output_video.mp4", codec="libx264", fps=24)
+    final_clip.write_videofile("D:\\网赚\\待发布的视频\\final_output_video.mp4", codec="libx264", fps=24)
 
     # 关闭文件以释放资源
     final_clip.close()
 
 
 if __name__ == "__main__":
-    concatenate_videos(["catt.worldd_17.mp4", "catt.worldd_18.mp4", "catt.worldd_19.mp4"])  # 替换为你的视频文件路径)
+    file_directory = f"D:\\网赚\\ins视频\\"
+    concatenate_videos([file_directory + "catt.worldd_4.mp4",
+                        file_directory + "catt.worldd_5.mp4",
+                        file_directory + "catt.worldd_6.mp4"])
