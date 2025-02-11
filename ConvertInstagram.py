@@ -2,6 +2,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+
 def convert_instagram_video(instagram_url):
     # 设置 ChromeOptions
     options = webdriver.ChromeOptions()
@@ -36,12 +37,11 @@ def convert_instagram_video(instagram_url):
     # 提取href属性
     href_list = [link.get_attribute("href") for link in download_links]
 
-    # 打印所有的下载链接
-    for href in href_list:
-        print(href)
-
     # 关闭 WebDriver
     driver.quit()
 
+    return href_list
+
+
 if __name__ == "__main__":
-   convert_instagram_video('https://www.instagram.com/p/DEnIIWyoshS/')
+    convert_instagram_video('https://www.instagram.com/p/DEnIIWyoshS/')
