@@ -23,7 +23,7 @@ for link in collected_links:
 
         try:
             video_data = requests.get(mp4_link).content
-            with open(f"{username}_{count}.mp4", "wb") as file:
+            with open(f"D:\\网赚\\ins视频\\{username}_{count}.mp4", "wb") as file:
                 file.write(video_data)
             print("视频下载完成！")
 
@@ -32,4 +32,5 @@ for link in collected_links:
             print(f"下载失败: {e}")
 
 # 视频拼接
+file_directory = f"D:\\网赚\\ins视频\\"
 HandleVideo.concatenate_videos(["catt.worldd_17.mp4", "catt.worldd_18.mp4", "catt.worldd_19.mp4"])
