@@ -12,7 +12,7 @@ def get_video_url(username):
     # 配置 Selenium WebDriver
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless")  # 无头模式（可选）
+    #options.add_argument("--headless")  # 无头模式（可选）
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -42,14 +42,21 @@ def get_video_url(username):
 
         # 滚动页面直到加载所有帖子
         last_height = driver.execute_script("return document.body.scrollHeight")
-        while True:
+        # 翻页次数
+        page = 1
+
+        while page < 21:
             # 获取页面中所有的视频链接
             elements = driver.find_elements(By.TAG_NAME, "a")
             for elem in elements:
                 href = elem.get_attribute("href")
-                if href and href.startswith(f"https://www.instagram.com/{username}/p/"):
-                    post_id = href.split("/p/")[1].split("/")[0]
-                    collected_links.add(f"https://www.instagram.com/p/{post_id}/")
+                if href:
+                    if href.startswith(f"https://www.instagram.com/{username}/p/"):
+                        post_id = href.split("/p/")[1].split("/")[0]
+                        collected_links.add(f"https://www.instagram.com/p/{post_id}/")
+                    elif href.startswith(f"https://www.instagram.com/{username}/reel/"):
+                        post_id = href.split("/reel/")[1].split("/")[0]
+                        collected_links.add(f"https://www.instagram.com/reel/{post_id}/")
 
             # 滚动页面到底部
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -60,6 +67,7 @@ def get_video_url(username):
             if new_height == last_height:  # 如果页面高度没有变化，说明已经加载完所有内容
                 break
             last_height = new_height
+            page = page + 1
 
         return collected_links
 
@@ -69,7 +77,7 @@ def get_video_url(username):
 
 
 if __name__ == "__main__":
-    collected_links = get_video_url('catt.worldd')
+    collected_links = get_video_url('tgc_staff')
 
     for link in collected_links:
         print("\n收集到的Instagram分享链接:")

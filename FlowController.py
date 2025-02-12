@@ -4,7 +4,7 @@ import ConvertInstagram
 import GetInstagramVideoUrl
 import HandleVideo
 
-username = 'catt.worldd'
+username = 'tgc_staff'
 
 # 获取Instagram分享链接
 collected_links = GetInstagramVideoUrl.get_video_url(username)
@@ -31,6 +31,7 @@ for link in collected_links:
         except Exception as e:
             print(f"下载失败: {e}")
 
+'''
 # 视频拼接
 file_directory = f"D:\\网赚\\ins视频\\"
 
@@ -40,3 +41,4 @@ for i, group in enumerate(video_groups):
     count = i + 1
     HandleVideo.concatenate_videos(group, f"D:\\网赚\\已处理视频\\final_output_video_{count}.mp4")
     print(f"第{count}组视频已处理完成")
+'''
