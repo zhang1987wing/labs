@@ -33,4 +33,10 @@ for link in collected_links:
 
 # 视频拼接
 file_directory = f"D:\\网赚\\ins视频\\"
-HandleVideo.concatenate_videos(["catt.worldd_17.mp4", "catt.worldd_18.mp4", "catt.worldd_19.mp4"])
+
+video_groups = HandleVideo.video_grouping(file_directory)
+
+for i, group in enumerate(video_groups):
+    count = i + 1
+    HandleVideo.concatenate_videos(group, f"D:\\网赚\\已处理视频\\final_output_video_{count}.mp4")
+    print(f"第{count}组视频已处理完成")

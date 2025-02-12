@@ -1,8 +1,9 @@
+import os
+
 from moviepy import *
 
 
-def concatenate_videos(video_files):
-
+def concatenate_videos(video_files, output_file):
     clips = []
 
     # 将所有视频文件加载到 clips 列表中
@@ -24,14 +25,39 @@ def concatenate_videos(video_files):
     final_clip = concatenate_videoclips(clips_with_transitions, method="compose")
 
     # 保存拼接后的视频
-    final_clip.write_videofile("D:\\网赚\\待发布的视频\\final_output_video.mp4", codec="libx264", fps=24)
+    final_clip.write_videofile(output_file, codec="libx264", fps=24)
 
     # 关闭文件以释放资源
     final_clip.close()
 
 
+def video_grouping(video_folder, group_size):
+    # 获取所有视频文件
+    video_files = sorted(
+        [os.path.join(video_folder, f) for f in os.listdir(video_folder) if f.endswith((".mp4", ".avi", ".mov"))],
+        key=lambda x: int(x.split('_')[-1].split('.')[0])
+        # Extract the number from the filename and convert it to an integer
+    )
+
+    video_groups = []
+
+    # 每 3 个为一组处理
+    for i in range(0, len(video_files), group_size):
+        group = video_files[i:i + group_size]  # 取 group_size 个视频
+        if len(group) < group_size:  # 避免最后不足 group_size 个的情况
+            break
+
+        video_groups.append(group)
+
+    return video_groups
+
+
 if __name__ == "__main__":
     file_directory = f"D:\\网赚\\ins视频\\"
-    concatenate_videos([file_directory + "catt.worldd_4.mp4",
-                        file_directory + "catt.worldd_5.mp4",
-                        file_directory + "catt.worldd_6.mp4"])
+
+    video_groups = video_grouping(file_directory, 4)
+
+    for i, group in enumerate(video_groups):
+        count = i + 1
+        concatenate_videos(group, f"D:\\网赚\\已处理视频\\final_output_video_{count}.mp4")
+        print(f"第{count}组视频已处理完成")
