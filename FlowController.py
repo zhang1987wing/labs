@@ -1,35 +1,58 @@
+import csv
+import os
+
 import requests
 
 import ConvertInstagram
 import GetInstagramVideoUrl
+import HandleCsv
 import HandleVideo
 
 username = 'tgc_staff'
+filename = f'{username}_video_links.csv'
+collected_links = set()
 
-# 获取Instagram分享链接
-collected_links = GetInstagramVideoUrl.get_video_url(username)
+if not os.path.exists(filename):
+    # 获取Instagram分享链接
+    collected_links = GetInstagramVideoUrl.get_video_url(username)
+    HandleCsv.save_links_to_csv(collected_links, filename)
+
+updated_rows = HandleCsv.get_updated_rows_from_csv(filename)
 count = 1
 
-for link in collected_links:
-    print("\n收集到的Instagram分享链接:")
-    print(link)
 
-    # 从分享链接中获取mp4链接
-    mp4_links = ConvertInstagram.convert_instagram_video(link)
+try:
+    for row in updated_rows:
+        link = row[0]
 
-    # 打印所有的下载链接
-    for mp4_link in mp4_links:
-        print(mp4_link)
+        print("\n收集到的Instagram分享链接:")
+        print(link)
 
-        try:
-            video_data = requests.get(mp4_link).content
-            with open(f"D:\\网赚\\ins视频\\{username}_{count}.mp4", "wb") as file:
-                file.write(video_data)
-            print("视频下载完成！")
+        if row[1] == 'True':
+            continue
 
-            count = count + 1
-        except Exception as e:
-            print(f"下载失败: {e}")
+        # 从分享链接中获取mp4链接
+        mp4_links = ConvertInstagram.convert_instagram_video(link)
+
+        if len(mp4_links) != 0:
+            row[1] = 'True'
+
+        # 打印所有的下载链接
+        for mp4_link in mp4_links:
+            print(mp4_link)
+
+            try:
+                video_data = requests.get(mp4_link).content
+                with open(f"D:\\网赚\\ins视频\\{username}_{count}.mp4", "wb") as file:
+                    file.write(video_data)
+                print("视频下载完成！")
+
+                count = count + 1
+                row[1] = 'True'
+            except Exception as e:
+                print(f"下载失败: {e}")
+finally:
+    HandleCsv.update_csv(filename, updated_rows)
 
 '''
 # 视频拼接

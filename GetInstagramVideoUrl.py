@@ -1,3 +1,4 @@
+import csv
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,7 +13,7 @@ def get_video_url(username):
     # 配置 Selenium WebDriver
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-blink-features=AutomationControlled")
-    #options.add_argument("--headless")  # 无头模式（可选）
+    options.add_argument("--headless")  # 无头模式（可选）
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -78,7 +79,3 @@ def get_video_url(username):
 
 if __name__ == "__main__":
     collected_links = get_video_url('tgc_staff')
-
-    for link in collected_links:
-        print("\n收集到的Instagram分享链接:")
-        print(link)
