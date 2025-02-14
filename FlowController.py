@@ -1,4 +1,3 @@
-import csv
 import os
 
 import requests
@@ -8,7 +7,7 @@ import GetInstagramVideoUrl
 import HandleCsv
 import HandleVideo
 
-username = 'tgc_staff'
+username = 'dddddo0lllll'
 filename = f'{username}_video_links.csv'
 collected_links = set()
 
@@ -37,13 +36,19 @@ try:
         if len(mp4_links) != 0:
             row[1] = 'True'
 
+        folder_path = f"D:\\网赚\\ins视频\\{username}"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)  # 创建文件夹
+
         # 打印所有的下载链接
         for mp4_link in mp4_links:
             print(mp4_link)
 
             try:
                 video_data = requests.get(mp4_link).content
-                with open(f"D:\\网赚\\ins视频\\{username}_{count}.mp4", "wb") as file:
+                video_path = os.path.join(folder_path, f"{username}_{count}.mp4")
+
+                with open(video_path, "wb") as file:
                     file.write(video_data)
                 print("视频下载完成！")
 
