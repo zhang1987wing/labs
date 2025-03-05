@@ -35,7 +35,7 @@ def get_video_url(username):
         time.sleep(10)
 
         # 博主主页
-        driver.get(f'https://www.instagram.com/{username}/')
+        driver.get(f'https://www.instagram.com/{username}/reels')
         time.sleep(5)
 
         # 存储 href 结果

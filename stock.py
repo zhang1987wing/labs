@@ -14,33 +14,12 @@ def calculate_indicators(df):
     close = df['收盘'].values
     high = df['最高'].values
     low = df['最低'].values
+    open = df['开盘'].values
 
-    df['MA20'] = talib.SMA(close, timeperiod=20)
-    DIF, DEA, MACD = talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
-    df['DIF'] = DIF
-    df['DEA'] = DEA
-    df['MACD'] = (DIF - DEA) * 2
-    df['RSI'] = talib.RSI(close, timeperiod=14)
+    engulfing_pattern = talib.CDLENGULFING(open, high, low, close)
+    print(engulfing_pattern)
 
-    print(MACD > 0 and DIF >= DEA)
-    #print(80 <= df['RSI'] <= 20)
-
-    # 计算 DMI 指标
-    period = 14  # 常用周期为14
-
-    # +DI 和 -DI
-    plus_di = talib.PLUS_DI(high, low, close, timeperiod=period)
-    minus_di = talib.MINUS_DI(high, low, close, timeperiod=period)
-
-    # ADX（平均趋向指数）
-    adx = talib.ADX(high, low, close, timeperiod=period)
-
-    # 输出结果
-    print("Plus DI (+DI):", plus_di)
-    print("Minus DI (-DI):", minus_di)
-    print(plus_di > minus_di)
-
-    return df
+    return engulfing_pattern
 
 
 # 获取板块行情数据
@@ -66,7 +45,7 @@ def get_board_concept_name_df():
     print(board_df.tail(10))
 
 
-#data = get_stock_data('002215', '20240224', '20250224')
-#calculate_indicators(data)
+data = get_stock_data('002787', '20250225', '20250305')
+calculate_indicators(data)
 
-get_board_concept_name_df()
+#get_board_concept_name_df()
