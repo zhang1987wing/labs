@@ -2,6 +2,7 @@ import akshare as ak
 import numpy as np
 import pandas as pd
 import talib
+import matplotlib.pyplot as plt
 
 
 def get_stock_data(stock_code, start_date, end_date):
@@ -18,6 +19,27 @@ def calculate_indicators(df):
 
     engulfing_pattern = talib.CDLENGULFING(open, high, low, close)
     print(engulfing_pattern)
+
+    # 可视化布林带
+    # 生成一些模拟数据
+    close = np.random.normal(100, 5, 100)  # 100 个模拟收盘价
+    upper, middle, lower = talib.BBANDS(close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
+
+    if close[-1] < lower[-1]:  # 当前价格低于下轨
+        print("可能是买入信号")
+    elif close[-1] > upper[-1]:  # 当前价格高于上轨
+        print("可能是卖出信号")
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(close, label="Close Price", color='blue')
+    plt.plot(upper, label="Upper Band", linestyle="dashed", color="red")
+    plt.plot(middle, label="Middle Band", linestyle="dotted", color="black")
+    plt.plot(lower, label="Lower Band", linestyle="dashed", color="green")
+
+    plt.fill_between(range(len(close)), lower, upper, color='gray', alpha=0.2)  # 填充布林带区域
+    plt.legend()
+    plt.title("Bollinger Bands")
+    plt.show()
 
     return engulfing_pattern
 
