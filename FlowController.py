@@ -7,7 +7,7 @@ import GetInstagramVideoUrl
 import HandleCsv
 import HandleVideo
 
-username = 'ahyeon_babymons7er'
+username = 'superfunnyvideoshare'
 filename = f'{username}_video_links.csv'
 collected_links = set()
 

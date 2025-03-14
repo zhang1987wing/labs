@@ -7,7 +7,7 @@ client = OpenAI(
     base_url="https://ark.cn-beijing.volces.com/api/v3",
     # 深度推理模型耗费时间会较长，建议您设置一个较长的超时时间，推荐为30分钟
     timeout=1800,
-    )
+)
 response = client.chat.completions.create(
     # 替换 <Model> 为模型的Model ID
     model="deepseek-r1-distill-qwen-7b-250120",

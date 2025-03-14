@@ -6,42 +6,44 @@ import matplotlib.pyplot as plt
 
 
 def get_stock_data(stock_code, start_date, end_date):
-    data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date, adjust="qfq")
-    print(data)
-    return data
+    stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
+                                    adjust="qfq")
+    print(stock_data.columns.tolist())
+    stock_data.columns = ["date", "open", "close", "high", "low", "volume", "turnover", "amplitude", "change_pct",
+                          "change_amount"]
+
+    # 将日期转换为索引
+    stock_data["date"] = pd.to_datetime(stock_data["date"])
+    stock_data.set_index("date", inplace=True)
+
+    return stock_data
 
 
-def calculate_indicators(df):
-    close = df['收盘'].values
-    high = df['最高'].values
-    low = df['最低'].values
-    open = df['开盘'].values
+def calculate_indicators(stock_data):
+    close = stock_data['close'].values
+    high = stock_data['high'].values
+    low = stock_data['low'].values
+    open = stock_data['open'].values
 
-    engulfing_pattern = talib.CDLENGULFING(open, high, low, close)
-    print(engulfing_pattern)
+    # 布林带指标
+    stock_data["BBANDS_upper"], stock_data["BBANDS_middle"], stock_data["BBANDS_lower"] = talib.BBANDS(close,
+                                                                                                       timeperiod=20,
+                                                                                                       nbdevup=2,
+                                                                                                       nbdevdn=2,
+                                                                                                       matype=0)
 
-    # 可视化布林带
-    # 生成一些模拟数据
-    close = np.random.normal(100, 5, 100)  # 100 个模拟收盘价
-    upper, middle, lower = talib.BBANDS(close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
+    # 均线指标
+    stock_data["ma10"] = talib.SMA(stock_data["close"], timeperiod=10)
+    stock_data["ma5"] = talib.SMA(stock_data["close"], timeperiod=5)
 
-    if close[-1] < lower[-1]:  # 当前价格低于下轨
-        print("可能是买入信号")
-    elif close[-1] > upper[-1]:  # 当前价格高于上轨
-        print("可能是卖出信号")
+    # MACD指标
+    stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(stock_data["close"], fastperiod=12, slowperiod=26,
+                                                                      signalperiod=9)
+    stock_data["macd"] = (stock_data["macd_dif"] - stock_data["macd_dea"]) * 2
 
-    plt.figure(figsize=(12, 6))
-    plt.plot(close, label="Close Price", color='blue')
-    plt.plot(upper, label="Upper Band", linestyle="dashed", color="red")
-    plt.plot(middle, label="Middle Band", linestyle="dotted", color="black")
-    plt.plot(lower, label="Lower Band", linestyle="dashed", color="green")
-
-    plt.fill_between(range(len(close)), lower, upper, color='gray', alpha=0.2)  # 填充布林带区域
-    plt.legend()
-    plt.title("Bollinger Bands")
-    plt.show()
-
-    return engulfing_pattern
+    # DMI指标
+    stock_data["dmi_plus"] = talib.PLUS_DI(high, low, close, timeperiod=14)
+    stock_data["dmi_minus"] = talib.MINUS_DI(high, low, close, timeperiod=14)
 
 
 # 获取板块行情数据
@@ -67,7 +69,69 @@ def get_board_concept_name_df():
     print(board_df.tail(10))
 
 
-data = get_stock_data('002787', '20250225', '20250305')
-calculate_indicators(data)
+def trade_strategy(stock_data):
+    buy_date = ''
+    position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
+    buy_price = 0
+    capital = 100000  # 初始资金
+    holdings = 0
 
-#get_board_concept_name_df()
+    trade_log = []
+
+    for i in range(1, len(stock_data)):
+        close = stock_data["close"].iloc[i]
+        lower = stock_data["BBANDS_lower"].iloc[i]
+        upper = stock_data["BBANDS_upper"].iloc[i]
+        ma5 = stock_data["ma5"].iloc[i]
+        ma10 = stock_data["ma10"].iloc[i]
+        macd = stock_data['macd'].iloc[i]
+        dif = stock_data['dif'].iloc[i]
+        dea = stock_data['dea'].iloc[i]
+        dmi_plus = stock_data['dmi_plus'].iloc[i]
+        dmi_minus = stock_data['dmi_minus'].iloc[i]
+
+        macd_strategy = macd > 0 and dif > dea
+        dmi_strategy = dmi_plus > dmi_minus
+        bbands_strategy = close < lower
+        ma_strategy = ma5 > ma10
+
+        # 买入条件
+        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma_strategy:
+            buy_price = close
+            position = 1
+            holdings = capital // buy_price
+            capital -= holdings * buy_price
+            buy_date = stock_data.index[i]
+            trade_log.append(f"BUY: {stock_data.index[i]} at {buy_price}")
+
+        # 卖出条件
+        elif position == 1:
+            days_held = (stock_data.index[i] - buy_date).days
+            profit_ratio = (close - buy_price) / buy_price
+
+            if macd_strategy == False or dmi_strategy == False or bbands_strategy == False or ma_strategy == False:
+                sell_price = close
+                position = 0
+                capital += holdings * sell_price
+                holdings = 0
+                trade_log.append(
+                    f"SELL: {stock_data.index[i].date()} at {sell_price:.2f} | Profit: {profit_ratio * 100:.2f}% | "
+                    f"Days Held: {days_held}"
+                )
+
+    # 最终资金 + 持有股票市值
+    if position == 1:
+        capital += holdings * stock_data["close"].iloc[-1]
+
+    # 打印交易记录
+    for trade in trade_log:
+        print(trade)
+
+    print(f"\n💰 Final Capital: {capital:.2f} CNY")
+
+
+data = get_stock_data('002879', '20250101', '20250314')
+calculate_indicators(data)
+trade_strategy(data)
+
+# get_board_concept_name_df()
