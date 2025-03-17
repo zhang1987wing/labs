@@ -9,21 +9,20 @@ def get_stock_data(stock_code, start_date, end_date):
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
     print(stock_data.columns.tolist())
-    stock_data.columns = ["date", "open", "close", "high", "low", "volume", "turnover", "amplitude", "change_pct",
-                          "change_amount"]
+    stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅', '涨跌额', '换手率']
 
     # 将日期转换为索引
-    stock_data["date"] = pd.to_datetime(stock_data["date"])
-    stock_data.set_index("date", inplace=True)
+    stock_data['日期'] = pd.to_datetime(stock_data['日期'])
+    stock_data.set_index('日期', inplace=True)
 
     return stock_data
 
 
 def calculate_indicators(stock_data):
-    close = stock_data['close'].values
-    high = stock_data['high'].values
-    low = stock_data['low'].values
-    open = stock_data['open'].values
+    close = stock_data['收盘'].values
+    high = stock_data['最高'].values
+    low = stock_data['最低'].values
+    open = stock_data['开盘'].values
 
     # 布林带指标
     stock_data["BBANDS_upper"], stock_data["BBANDS_middle"], stock_data["BBANDS_lower"] = talib.BBANDS(close,
@@ -33,11 +32,11 @@ def calculate_indicators(stock_data):
                                                                                                        matype=0)
 
     # 均线指标
-    stock_data["ma10"] = talib.SMA(stock_data["close"], timeperiod=10)
-    stock_data["ma5"] = talib.SMA(stock_data["close"], timeperiod=5)
+    stock_data["ma10"] = talib.SMA(close, timeperiod=10)
+    stock_data["ma5"] = talib.SMA(close, timeperiod=5)
 
     # MACD指标
-    stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(stock_data["close"], fastperiod=12, slowperiod=26,
+    stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(close, fastperiod=12, slowperiod=26,
                                                                       signalperiod=9)
     stock_data["macd"] = (stock_data["macd_dif"] - stock_data["macd_dea"]) * 2
 
@@ -79,14 +78,14 @@ def trade_strategy(stock_data):
     trade_log = []
 
     for i in range(1, len(stock_data)):
-        close = stock_data["close"].iloc[i]
+        close = stock_data["收盘"].iloc[i]
         lower = stock_data["BBANDS_lower"].iloc[i]
         upper = stock_data["BBANDS_upper"].iloc[i]
         ma5 = stock_data["ma5"].iloc[i]
         ma10 = stock_data["ma10"].iloc[i]
         macd = stock_data['macd'].iloc[i]
-        dif = stock_data['dif'].iloc[i]
-        dea = stock_data['dea'].iloc[i]
+        dif = stock_data['macd_dif'].iloc[i]
+        dea = stock_data['macd_dea'].iloc[i]
         dmi_plus = stock_data['dmi_plus'].iloc[i]
         dmi_minus = stock_data['dmi_minus'].iloc[i]
 
