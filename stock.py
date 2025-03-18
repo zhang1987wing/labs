@@ -170,7 +170,35 @@ def trade_strategy(stock_data):
     print(f"\n💰 Final Capital: {capital:.2f} CNY")
 
 
-data = get_stock_data('002879', '20220101', '20220717')
+def manual_dmi(df, timeperiod=14):
+    # 计算 True Range (TR)
+    df['high_low'] = df['最高'] - df['最低']
+    df['high_close'] = (df['最高'] - df['收盘'].shift(1)).abs()
+    df['low_close'] = (df['最低'] - df['收盘'].shift(1)).abs()
+
+    df['TR'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
+
+    # 计算 +DM 和 -DM
+    df['+DM'] = np.where(df['最高'].diff() > df['最低'].diff(),
+                         df['最高'].diff().clip(lower=0), 0)
+    df['-DM'] = np.where(df['最低'].diff() > df['最高'].diff(),
+                         df['最低'].diff().clip(lower=0), 0)
+
+    # 平滑 TR, +DM, -DM（Wilder's smoothing）
+    smooth_factor = timeperiod
+    df['ATR'] = df['TR'].rolling(window=smooth_factor).mean()
+    df['+DI'] = 100 * (df['+DM'].rolling(window=smooth_factor).mean() / df['ATR'])
+    df['-DI'] = 100 * (df['-DM'].rolling(window=smooth_factor).mean() / df['ATR'])
+
+    # 计算 ADX
+    df['DX'] = 100 * abs(df['+DI'] - df['-DI']) / (df['+DI'] + df['-DI'])
+    df['ADX'] = df['DX'].rolling(window=smooth_factor).mean()
+
+    print(df[['收盘', '+DI', '-DI', 'ADX']])
+
+
+data = get_stock_data('002879', '20220301', '202203018')
+
 calculate_indicators(data)
 trade_strategy(data)
 
