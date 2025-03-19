@@ -145,8 +145,9 @@ def trade_strategy(stock_data):
             days_held_strategy = days_held > 10
             atr_strategy = close < atr_sell_price
 
-            sell_strategy = ((macd_strategy is np.False_) or (dmi_strategy is np.False_) or (bbands_strategy is False)
-                             or (ma_strategy is np.False_) or profit_strategy or days_held_strategy or atr_strategy)
+            # sell_strategy = ((macd_strategy is np.False_) or (dmi_strategy is np.False_) or (bbands_strategy is False)
+            #                or (ma_strategy is np.False_) or profit_strategy or days_held_strategy or atr_strategy)
+            sell_strategy = (profit_strategy or days_held_strategy or atr_strategy)
 
             if sell_strategy:
                 sell_price = atr_sell_price if atr_strategy else close
@@ -170,36 +171,15 @@ def trade_strategy(stock_data):
     print(f"\n💰 Final Capital: {capital:.2f} CNY")
 
 
-def manual_dmi(df, timeperiod=14):
-    # 计算 True Range (TR)
-    df['high_low'] = df['最高'] - df['最低']
-    df['high_close'] = (df['最高'] - df['收盘'].shift(1)).abs()
-    df['low_close'] = (df['最低'] - df['收盘'].shift(1)).abs()
+if __name__ == "__main__":
+    # data = get_stock_data('603871', '20220101', '202503019')
 
-    df['TR'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
+    # calculate_indicators(data)
+    # trade_strategy(data)
 
-    # 计算 +DM 和 -DM
-    df['+DM'] = np.where(df['最高'].diff() > df['最低'].diff(),
-                         df['最高'].diff().clip(lower=0), 0)
-    df['-DM'] = np.where(df['最低'].diff() > df['最高'].diff(),
-                         df['最低'].diff().clip(lower=0), 0)
+    data = ak.stock_yjbb_em(date="20240930")
+    print(data.head())
 
-    # 平滑 TR, +DM, -DM（Wilder's smoothing）
-    smooth_factor = timeperiod
-    df['ATR'] = df['TR'].rolling(window=smooth_factor).mean()
-    df['+DI'] = 100 * (df['+DM'].rolling(window=smooth_factor).mean() / df['ATR'])
-    df['-DI'] = 100 * (df['-DM'].rolling(window=smooth_factor).mean() / df['ATR'])
-
-    # 计算 ADX
-    df['DX'] = 100 * abs(df['+DI'] - df['-DI']) / (df['+DI'] + df['-DI'])
-    df['ADX'] = df['DX'].rolling(window=smooth_factor).mean()
-
-    print(df[['收盘', '+DI', '-DI', 'ADX']])
-
-
-data = get_stock_data('002879', '20220301', '202203018')
-
-calculate_indicators(data)
-trade_strategy(data)
-
-# get_board_concept_name_df()
+    # get_board_concept_name_df()
+    # sell_price = sell_price_strategy(16.90, 16.58, 0.4)
+    # print(sell_price)
