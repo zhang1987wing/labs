@@ -34,6 +34,7 @@ def calculate_indicators(stock_data):
     # 均线指标
     stock_data["ma10"] = talib.SMA(close, timeperiod=10)
     stock_data["ma5"] = talib.SMA(close, timeperiod=5)
+    stock_data["ma60"] = talib.SMA(close, timeperiod=60)
 
     # MACD指标
     stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(close, fastperiod=12, slowperiod=26,
@@ -83,6 +84,7 @@ def sell_price_strategy(high, low, atr):
 
     return sell_price
 
+
 def trade_strategy(stock_data):
     buy_date = ''
     position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
@@ -105,6 +107,7 @@ def trade_strategy(stock_data):
         BBANDS_upper = stock_data["BBANDS_upper"].iloc[i]
         ma5 = stock_data["ma5"].iloc[i]
         ma10 = stock_data["ma10"].iloc[i]
+        ma60 = stock_data["ma60"].iloc[i]
         macd = stock_data['macd'].iloc[i]
         dif = stock_data['macd_dif'].iloc[i]
         dea = stock_data['macd_dea'].iloc[i]
@@ -117,7 +120,9 @@ def trade_strategy(stock_data):
         bbands_strategy = True
         # ma_strategy = ma5 > ma10
         ma_strategy = (stock_data["ma5"].iloc[i] > stock_data["ma10"].iloc[i] and stock_data["ma5"].iloc[i - 1] <
-                       stock_data["ma10"].iloc[i - 1])
+                       stock_data["ma10"].iloc[i - 1]) and (
+                           ma5 > ma60
+                       )
 
         # 检查是否在冷却期内
         if last_sell_idx != 0:
@@ -142,8 +147,8 @@ def trade_strategy(stock_data):
             date = stock_data.index[i].date()
             days_held = i - buy_date_idx
             profit_ratio = (close - buy_price) / buy_price
-            profit_strategy = profit_ratio > 0.10 or profit_ratio < -0.10
-            days_held_strategy = days_held > 5
+            profit_strategy = profit_ratio > 0.10 or profit_ratio < -0.04
+            days_held_strategy = days_held > 300
             atr_strategy = close < atr_sell_price
             days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
             # days_increase_strategy = False
@@ -175,7 +180,7 @@ def trade_strategy(stock_data):
 
 
 if __name__ == "__main__":
-    data = get_stock_data('000796', '20240101', '202503024')
+    data = get_stock_data('600276', '20210101', '20250326')
 
     calculate_indicators(data)
     trade_strategy(data)
