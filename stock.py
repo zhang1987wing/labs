@@ -34,7 +34,7 @@ def calculate_indicators(stock_data):
     # 均线指标
     stock_data["ma10"] = talib.SMA(close, timeperiod=10)
     stock_data["ma5"] = talib.SMA(close, timeperiod=5)
-    stock_data["ma60"] = talib.SMA(close, timeperiod=60)
+    stock_data["ma20"] = talib.SMA(close, timeperiod=20)
 
     # MACD指标
     stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(close, fastperiod=12, slowperiod=26,
@@ -93,7 +93,7 @@ def trade_strategy(stock_data):
     holdings = 0
     buy_date_idx = 0
     atr_sell_price = 0.0
-    cooldown_days = 0
+    cooldown_days = 5
     last_sell_idx = 0
 
     trade_log = []
@@ -107,7 +107,7 @@ def trade_strategy(stock_data):
         BBANDS_upper = stock_data["BBANDS_upper"].iloc[i]
         ma5 = stock_data["ma5"].iloc[i]
         ma10 = stock_data["ma10"].iloc[i]
-        ma60 = stock_data["ma60"].iloc[i]
+        ma20 = stock_data["ma20"].iloc[i]
         macd = stock_data['macd'].iloc[i]
         dif = stock_data['macd_dif'].iloc[i]
         dea = stock_data['macd_dea'].iloc[i]
@@ -115,15 +115,20 @@ def trade_strategy(stock_data):
         dmi_minus = stock_data['dmi_minus'].iloc[i]
         atr = stock_data['atr'].iloc[i]
 
-        macd_strategy = macd > 0 and dif > dea
+        macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2
         dmi_strategy = dmi_plus > dmi_minus
         bbands_strategy = True
-        # ma_strategy = ma5 > ma10
-        ma_strategy = (stock_data["ma5"].iloc[i] > stock_data["ma10"].iloc[i] and stock_data["ma5"].iloc[i - 1] <
-                       stock_data["ma10"].iloc[i - 1]) and (
-                           ma5 > ma60
-                       )
+        ma510_strategy = ma5 > ma10
+        ma20_strategy = (stock_data["ma20"].iloc[i] > stock_data["ma20"].iloc[i - 1]) and (stock_data["ma20"].iloc[i] >
+                                                                                           stock_data["ma20"].iloc[
+                                                                                               i - 2]) and (
+                                    stock_data["ma20"].iloc[i - 1] >
+                                    stock_data["ma20"].iloc[i - 2])
 
+        '''
+        ma510_strategy = (stock_data["ma5"].iloc[i] > stock_data["ma10"].iloc[i] and stock_data["ma5"].iloc[i - 1] <
+                          stock_data["ma10"].iloc[i - 1])
+        '''
         # 检查是否在冷却期内
         if last_sell_idx != 0:
             days_since_sell = i - last_sell_idx
@@ -132,7 +137,7 @@ def trade_strategy(stock_data):
                 continue
 
         # 买入条件
-        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma_strategy:
+        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy and ma20_strategy:
             buy_price = close
             position = 1
             holdings = capital // buy_price
@@ -148,7 +153,7 @@ def trade_strategy(stock_data):
             days_held = i - buy_date_idx
             profit_ratio = (close - buy_price) / buy_price
             profit_strategy = profit_ratio > 0.10 or profit_ratio < -0.04
-            days_held_strategy = days_held > 300
+            days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
             days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
             # days_increase_strategy = False
@@ -180,7 +185,7 @@ def trade_strategy(stock_data):
 
 
 if __name__ == "__main__":
-    data = get_stock_data('600276', '20210101', '20250326')
+    data = get_stock_data('002570', '20210101', '20250326')
 
     calculate_indicators(data)
     trade_strategy(data)
