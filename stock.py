@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 def get_stock_data(stock_code, start_date, end_date):
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
-    print(stock_data.columns.tolist())
+
     stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
 
@@ -97,6 +97,7 @@ def trade_strategy(stock_data):
     last_sell_idx = 0
 
     trade_log = []
+    stock_code = stock_data["股票代码"].iloc[0]
 
     for i in range(1, len(stock_data)):
         close = stock_data["收盘"].iloc[i]
@@ -122,8 +123,8 @@ def trade_strategy(stock_data):
         ma20_strategy = (stock_data["ma20"].iloc[i] > stock_data["ma20"].iloc[i - 1]) and (stock_data["ma20"].iloc[i] >
                                                                                            stock_data["ma20"].iloc[
                                                                                                i - 2]) and (
-                                    stock_data["ma20"].iloc[i - 1] >
-                                    stock_data["ma20"].iloc[i - 2])
+                                stock_data["ma20"].iloc[i - 1] >
+                                stock_data["ma20"].iloc[i - 2])
 
         '''
         ma510_strategy = (stock_data["ma5"].iloc[i] > stock_data["ma10"].iloc[i] and stock_data["ma5"].iloc[i - 1] <
@@ -178,20 +179,49 @@ def trade_strategy(stock_data):
         capital += holdings * stock_data["收盘"].iloc[-1]
 
     # 打印交易记录
+    '''
     for trade in trade_log:
         print(trade)
+    '''
 
-    print(f"\n💰 Final Capital: {capital:.2f} CNY")
+    print(f"\n💰 StockCode: {stock_code}, Final Capital: {capital:.2f} CNY")
+    return capital
+
+
+def cal_profit_to_loss_ratio(stocks_profits):
+
+    # 初始资金
+    initial_funds = 100000
+
+    # 计算所有股票的盈亏总和
+    total_profit_loss = sum(stocks_profits.values())
+
+    # 计算整体盈亏比
+    profit_ratio = total_profit_loss / initial_funds
+
+    # 输出整体盈亏比
+    print(f"总盈亏：{total_profit_loss}, 整体盈亏比: {profit_ratio * 100:.2f}%")
 
 
 if __name__ == "__main__":
-    data = get_stock_data('002570', '20210101', '20250326')
 
-    calculate_indicators(data)
-    trade_strategy(data)
+    stock_profits = {
+        '002570': 0,
+        '603055': 0
+    }
+
+    for stock_code in stock_profits.keys():
+
+        data = get_stock_data(stock_code, '20210101', '20250402')
+
+        calculate_indicators(data)
+        stock_profits[stock_code] = trade_strategy(data) - 100000
+
+    cal_profit_to_loss_ratio(stock_profits)
 
     # 业绩报表
     # data = ak.stock_yjbb_em(date="20240930")
+
     # print(data.head())
 
     # 筹码分布
