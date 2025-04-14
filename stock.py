@@ -35,6 +35,7 @@ def calculate_indicators(stock_data):
     stock_data["ma10"] = talib.SMA(close, timeperiod=10)
     stock_data["ma5"] = talib.SMA(close, timeperiod=5)
     stock_data["ma20"] = talib.SMA(close, timeperiod=20)
+    stock_data["ma60"] = talib.SMA(close, timeperiod=60)
 
     # MACD指标
     stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(close, fastperiod=12, slowperiod=26,
@@ -85,6 +86,11 @@ def sell_price_strategy(high, low, atr):
     return sell_price
 
 
+# 是否涨停
+def cal_limit_up(prev_price, current_price):
+    return round(prev_price * 1.10, 2) == current_price
+
+
 def trade_strategy(stock_data):
     buy_date = ''
     position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
@@ -101,6 +107,7 @@ def trade_strategy(stock_data):
 
     for i in range(1, len(stock_data)):
         close = stock_data["收盘"].iloc[i]
+        prev_close = stock_data["收盘"].iloc[i - 1]
         highest = stock_data["最高"].iloc[i]
         lowest = stock_data["最低"].iloc[i]
         days_increase = stock_data["涨跌幅"].iloc[i]
@@ -109,6 +116,7 @@ def trade_strategy(stock_data):
         ma5 = stock_data["ma5"].iloc[i]
         ma10 = stock_data["ma10"].iloc[i]
         ma20 = stock_data["ma20"].iloc[i]
+        ma60 = stock_data["ma60"].iloc[i]
         macd = stock_data['macd'].iloc[i]
         dif = stock_data['macd_dif'].iloc[i]
         dea = stock_data['macd_dea'].iloc[i]
@@ -120,11 +128,13 @@ def trade_strategy(stock_data):
         dmi_strategy = dmi_plus > dmi_minus
         bbands_strategy = True
         ma510_strategy = ma5 > ma10
-        ma20_strategy = (stock_data["ma20"].iloc[i] > stock_data["ma20"].iloc[i - 1]) and (stock_data["ma20"].iloc[i] >
-                                                                                           stock_data["ma20"].iloc[
-                                                                                               i - 2]) and (
-                                stock_data["ma20"].iloc[i - 1] >
-                                stock_data["ma20"].iloc[i - 2])
+        ma20_strategy = ((ma20 > stock_data["ma20"].iloc[i - 1])
+                         and (ma20 > stock_data["ma20"].iloc[i - 2])
+                         and (stock_data["ma20"].iloc[i - 1] > stock_data["ma20"].iloc[i - 2]))
+        ma60_strategy = ((ma60 > stock_data["ma60"].iloc[i - 1])
+                         and (ma20 > stock_data["ma60"].iloc[i - 2])
+                         and (stock_data["ma60"].iloc[i - 1] > stock_data["ma60"].iloc[i - 2]))
+
 
         '''
         ma510_strategy = (stock_data["ma5"].iloc[i] > stock_data["ma10"].iloc[i] and stock_data["ma5"].iloc[i - 1] <
@@ -138,7 +148,7 @@ def trade_strategy(stock_data):
                 continue
 
         # 买入条件
-        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy and ma20_strategy:
+        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy and ma60_strategy:
             buy_price = close
             position = 1
             holdings = capital // buy_price
@@ -157,11 +167,16 @@ def trade_strategy(stock_data):
             days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
             days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
+            is_limit_up = cal_limit_up(prev_close, close)
             # days_increase_strategy = False
 
             # sell_strategy = ((macd_strategy is np.False_) or (dmi_strategy is np.False_) or (bbands_strategy is False)
             #                or (ma_strategy is np.False_) or profit_strategy or days_held_strategy or atr_strategy)
-            sell_strategy = (profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy)
+            sell_strategy = (
+                    profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy)
+
+            if is_limit_up:
+                sell_strategy = False
 
             if sell_strategy:
                 sell_price = atr_sell_price if atr_strategy else close
@@ -179,17 +194,14 @@ def trade_strategy(stock_data):
         capital += holdings * stock_data["收盘"].iloc[-1]
 
     # 打印交易记录
-    '''
     for trade in trade_log:
         print(trade)
-    '''
 
     print(f"\n💰 StockCode: {stock_code}, Final Capital: {capital:.2f} CNY")
     return capital
 
 
 def cal_profit_to_loss_ratio(stocks_profits):
-
     # 初始资金
     initial_funds = 100000
 
@@ -206,19 +218,17 @@ def cal_profit_to_loss_ratio(stocks_profits):
 if __name__ == "__main__":
 
     stock_profits = {
-        '002570': 0,
-        '603055': 0
+        '600326': 0
     }
 
     for stock_code in stock_profits.keys():
-
-        data = get_stock_data(stock_code, '20210101', '20250402')
+        data = get_stock_data(stock_code, '20210101', '20250414')
 
         calculate_indicators(data)
         stock_profits[stock_code] = trade_strategy(data) - 100000
 
     cal_profit_to_loss_ratio(stock_profits)
-
+    '''
     # 业绩报表
     # data = ak.stock_yjbb_em(date="20240930")
 
@@ -229,5 +239,6 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(16.90, 16.58, 0.4)
-    # print(sell_price)
+    sell_price = sell_price_strategy(6.93, 6.38, 0.41)
+    print(sell_price)
+    '''
