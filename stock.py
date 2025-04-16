@@ -36,6 +36,7 @@ def calculate_indicators(stock_data):
     stock_data["ma5"] = talib.SMA(close, timeperiod=5)
     stock_data["ma20"] = talib.SMA(close, timeperiod=20)
     stock_data["ma60"] = talib.SMA(close, timeperiod=60)
+    stock_data["ma250"] = talib.SMA(close, timeperiod=250)
 
     # MACD指标
     stock_data["macd_dif"], stock_data["macd_dea"], MACD = talib.MACD(close, fastperiod=12, slowperiod=26,
@@ -104,6 +105,8 @@ def trade_strategy(stock_data):
 
     trade_log = []
     stock_code = stock_data["股票代码"].iloc[0]
+    trade_count = 0
+    profit_count = 0
 
     for i in range(1, len(stock_data)):
         close = stock_data["收盘"].iloc[i]
@@ -117,6 +120,7 @@ def trade_strategy(stock_data):
         ma10 = stock_data["ma10"].iloc[i]
         ma20 = stock_data["ma20"].iloc[i]
         ma60 = stock_data["ma60"].iloc[i]
+        ma250 = stock_data["ma250"].iloc[i]
         macd = stock_data['macd'].iloc[i]
         dif = stock_data['macd_dif'].iloc[i]
         dea = stock_data['macd_dea'].iloc[i]
@@ -148,7 +152,7 @@ def trade_strategy(stock_data):
                 continue
 
         # 买入条件
-        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy and ma60_strategy:
+        if position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy and ma20_strategy:
             buy_price = close
             position = 1
             holdings = capital // buy_price
@@ -189,6 +193,11 @@ def trade_strategy(stock_data):
                     f"Days Held: {days_held}"
                 )
 
+                trade_count = trade_count + 1
+
+                if profit_ratio > 0:
+                    profit_count = profit_count + 1
+
     # 最终资金 + 持有股票市值
     if position == 1:
         capital += holdings * stock_data["收盘"].iloc[-1]
@@ -197,7 +206,7 @@ def trade_strategy(stock_data):
     for trade in trade_log:
         print(trade)
 
-    print(f"\n💰 StockCode: {stock_code}, Final Capital: {capital:.2f} CNY")
+    print(f"\n💰 StockCode: {stock_code}, Final Capital: {capital:.2f} CNY, Winning Rate: {(profit_count / trade_count) * 100:.2f}%")
     return capital
 
 
@@ -218,7 +227,7 @@ def cal_profit_to_loss_ratio(stocks_profits):
 if __name__ == "__main__":
 
     stock_profits = {
-        '600326': 0
+        '002151': 0
     }
 
     for stock_code in stock_profits.keys():
