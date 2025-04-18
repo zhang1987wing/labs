@@ -1,8 +1,21 @@
+from datetime import datetime
+
 import akshare as ak
 import numpy as np
 import pandas as pd
 import talib
 import matplotlib.pyplot as plt
+import concurrent.futures
+
+
+def get_stock_code():
+    df = pd.read_csv("stock_codes.csv")  # 替换为你的实际文件名
+
+    # 创建map：key为code，value为0
+    code_map = {str(code): 0 for code in df['code']}
+
+    # 输出结果
+    return code_map
 
 
 def get_stock_data(stock_code, start_date, end_date):
@@ -81,6 +94,16 @@ def get_board_concept_name_df():
     print(board_df.tail(10))
 
 
+def get_holdings_cost(capital, price):
+    shares_per_lot = 100
+    max_shares = int(capital // price)
+
+    lots = max_shares // shares_per_lot
+    holdings = lots * shares_per_lot
+
+    return holdings
+
+
 def sell_price_strategy(high, low, atr):
     height = high - low
 
@@ -137,10 +160,10 @@ def trade_strategy(stock_data, capital):
 
     for i in range(1, len(stock_data)):
         date = stock_data.index[i].date()
-
+        '''
         if date.strftime('%Y-%m-%d') == '2023-04-06':
             print("debug")
-
+        '''
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -173,9 +196,11 @@ def trade_strategy(stock_data, capital):
                          and (stock_data["ma20"].iloc[i - 1] > stock_data["ma20"].iloc[i - 2]))
         ma60_strategy = close > ma60
         volume_ma5_strategy = heavy_volume_sell_off(volume, volume_ma5, open, close)
+        volume_ma5_strategy = False
         losing_streak = (close < prev_close) and (prev_close < stock_data["收盘"].iloc[i - 2])
+        losing_streak = False
         long_upper_shadow_strategy = long_upper_shadow(open, close, highest, lowest, highest_250)
-        # long_upper_shadow_strategy = False
+        long_upper_shadow_strategy = False
 
         if volume_ma5_strategy or long_upper_shadow_strategy:
             cooldown_days = cooldown_days + 2
@@ -203,7 +228,7 @@ def trade_strategy(stock_data, capital):
         if buy_strategy:
             buy_price = close
             position = 1
-            holdings = capital // buy_price
+            holdings = get_holdings_cost(capital, buy_price)
             capital -= holdings * buy_price
             buy_date = stock_data.index[i]
             buy_date_idx = i
@@ -253,13 +278,18 @@ def trade_strategy(stock_data, capital):
     if capital < 0:
         capital = 0
 
+    '''
     # 打印交易记录
     for trade in trade_log:
         print(trade)
+    '''
 
-    print(
-        f"\n💰 StockCode: {stock_code}, Final Capital: {capital:.2f} CNY, Winning Rate: {(profit_count / trade_count) * 100:.2f}%")
-    return capital
+    result_str = (f"\nStockCode: {stock_code}, Final Capital: {capital:.2f} CNY, "
+                  f"Winning Rate: {(profit_count / trade_count) * 100:.2f}%,"
+                  f"持仓：{position}, 最后一次购买日期为：{buy_date}")
+    print(result_str)
+
+    return capital, buy_date, result_str
 
 
 def cal_profit_to_loss_ratio(stocks_profits):
@@ -276,26 +306,67 @@ def cal_profit_to_loss_ratio(stocks_profits):
     print(f"总盈亏：{total_profit_loss}, 整体盈亏比: {profit_ratio * 100:.2f}%")
 
 
-if __name__ == "__main__":
-
-    stock_profits = {
-        '002570': 0
-    }
-
-    capital = 100000
-
-    for stock_code in stock_profits.keys():
-        data = get_stock_data(stock_code, '20210101', '20250417')
+def process_stock(stock_code):
+    try:
+        data = get_stock_data(stock_code, '20240101', '20250418')
 
         calculate_indicators(data)
-        capital = trade_strategy(data, capital)
+        capital, last_buy_date, result_str = trade_strategy(data, base_capital)
 
-        stock_profits[stock_code] = capital - 100000
+        profit = capital - base_capital
+
+        return stock_code, profit, capital, last_buy_date, result_str
+    except Exception as e:
+        print(f"{stock_code} 处理失败: {e}")
+        return stock_code, 0, 0
+
+
+if __name__ == "__main__":
+
+    stock_profits = get_stock_code()
+    buy_map = {}
+
+    '''
+    stock_profits = {
+        '601398': 0,
+        '000796': 0,
+        '002475': 0,
+    }
+    '''
+    base_capital = 10000
+    capital = base_capital
+
+    today_str = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+        futures = {executor.submit(process_stock, code): code for code in stock_profits.keys()}
+
+        for future in concurrent.futures.as_completed(futures):
+            stock_code, profit, capital, last_buy_date, result_str = future.result()
+
+            stock_profits[stock_code] = profit
+            if last_buy_date == today_str:
+                buy_map[stock_code] = result_str
+
+            if capital == 0:
+                print(f"{stock_code} 模拟交易失败，终止所有线程")
+                break  # 可选：终止后续处理（注意：线程池无法中断已在运行的线程）
+
+    print(buy_map)
+    '''
+    for stock_code in stock_profits.keys():
+        data = get_stock_data(stock_code, '20240101', '20250418')
+
+        calculate_indicators(data)
+        capital = trade_strategy(data, base_capital)
+
+        stock_profits[stock_code] = capital - base_capital
 
         if capital == 0:
             break
-
+    '''
     # cal_profit_to_loss_ratio(stock_profits)
+
     '''
     # 业绩报表
     # data = ak.stock_yjbb_em(date="20240930")
