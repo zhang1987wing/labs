@@ -162,10 +162,10 @@ def trade_strategy(stock_data, capital):
 
     for i in range(1, len(stock_data)):
         date = stock_data.index[i].date()
-
+        '''
         if date.strftime('%Y-%m-%d') == '2025-04-18':
             print("debug")
-
+        '''
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -203,6 +203,7 @@ def trade_strategy(stock_data, capital):
         losing_streak = False
         long_upper_shadow_strategy = long_upper_shadow(open, close, highest, lowest, highest_250)
         # long_upper_shadow_strategy = False
+        is_limit_up = cal_limit_up(prev_close, close)
 
         if volume_ma5_strategy and long_upper_shadow_strategy:
             cooldown_days = cooldown_days + 2
@@ -245,7 +246,7 @@ def trade_strategy(stock_data, capital):
             days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
             days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
-            is_limit_up = cal_limit_up(prev_close, close)
+
             # days_increase_strategy = False
 
             # sell_strategy = ((macd_strategy is np.False_) or (dmi_strategy is np.False_) or (bbands_strategy is False)
@@ -280,22 +281,22 @@ def trade_strategy(stock_data, capital):
     if capital < 0:
         capital = 0
 
-
     # 打印交易记录
     for trade in trade_log:
         print(trade)
 
-
-    result_str = (f"\nStockCode: {stock_code}, Final Capital: {capital:.2f} CNY, "
-                  f"Winning Rate: {(profit_count / trade_count) * 100:.2f}%,"
-                  f"持仓：{position}, 最后一次购买日期为：{buy_date}, 买入价格：{buy_price:.2f}")
+    if trade_count == 0:
+        result_str = f"\nStockCode: {stock_code}, 没有交易记录"
+    else:
+        result_str = (f"\nStockCode: {stock_code}, Final Capital: {capital:.2f} CNY, "
+                      f"Winning Rate: {(profit_count / trade_count) * 100:.2f}%,"
+                      f"持仓：{position}, 最后一次购买日期为：{buy_date}, 买入价格：{buy_price:.2f}")
     print(result_str)
 
     return capital, buy_date, result_str
 
 
 def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
-
     # 计算所有股票的盈亏总和
     total_profit_loss = sum(stocks_profits.values())
 
@@ -332,7 +333,8 @@ if __name__ == "__main__":
     stock_profits = get_stock_code()
     '''
     stock_profits = {
-        '600800': 0,
+        '600355': 0,
+        #'600739': 0
     }
 
     base_capital = 10000
@@ -363,7 +365,7 @@ if __name__ == "__main__":
                 writer.writerow([stock_code, result_str])  # 写入一行记录
 
     print(buy_map)
-    
+
     cal_profit_to_loss_ratio(stock_profits, base_capital)
 
     # 业绩报表
