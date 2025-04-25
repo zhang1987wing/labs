@@ -96,6 +96,18 @@ def get_board_concept_name_df():
     print(board_df.tail(10))
 
 
+# 获取某只股票的财务指标
+def get_financial_abstract(stock_code):
+    df_finance = ak.stock_financial_abstract(symbol=stock_code)
+    return df_finance
+
+
+# 获取东方财富网资讯
+def get_news_em():
+    stock_news_em_df = ak.stock_news_em()
+    return stock_news_em_df
+
+
 def get_holdings_cost(capital, price):
     shares_per_lot = 100
     max_shares = int(capital // price)
@@ -162,10 +174,10 @@ def trade_strategy(stock_data, capital):
 
     for i in range(1, len(stock_data)):
         date = stock_data.index[i].date()
-        '''
-        if date.strftime('%Y-%m-%d') == '2025-04-18':
+
+        if date.strftime('%Y-%m-%d') == '2025-04-14':
             print("debug")
-        '''
+
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -190,13 +202,16 @@ def trade_strategy(stock_data, capital):
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
 
         macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2
+        # macd_strategy = True
         dmi_strategy = dmi_plus > dmi_minus
+        # dmi_strategy = True
         bbands_strategy = True
         ma510_strategy = ma5 > ma10
         ma20_strategy = ((ma20 > stock_data["ma20"].iloc[i - 1])
                          and (ma20 > stock_data["ma20"].iloc[i - 2])
                          and (stock_data["ma20"].iloc[i - 1] > stock_data["ma20"].iloc[i - 2]))
         ma60_strategy = close > ma60
+        # ma60_strategy = False
         volume_ma5_strategy = heavy_volume_sell_off(volume, volume_ma5, open, close)
         # volume_ma5_strategy = False
         # losing_streak = (close < prev_close) and (prev_close < stock_data["收盘"].iloc[i - 2])
@@ -204,6 +219,11 @@ def trade_strategy(stock_data, capital):
         long_upper_shadow_strategy = long_upper_shadow(open, close, highest, lowest, highest_250)
         # long_upper_shadow_strategy = False
         is_limit_up = cal_limit_up(prev_close, close)
+        # volume,连续3天放量
+        volume_last3days = bool((volume > stock_data["成交量"].iloc[i - 1])
+                                and (volume > stock_data["成交量"].iloc[i - 2])
+                                and (stock_data["成交量"].iloc[i - 1] > stock_data["成交量"].iloc[i - 2]))
+        # volume_last3days = True
 
         if volume_ma5_strategy and long_upper_shadow_strategy:
             cooldown_days = cooldown_days + 2
@@ -222,7 +242,7 @@ def trade_strategy(stock_data, capital):
             continue
 
         buy_strategy = (position == 0 and macd_strategy and dmi_strategy and bbands_strategy and ma510_strategy
-                        and ma20_strategy and ma60_strategy)
+                        and ma20_strategy and ma60_strategy and volume_last3days)
 
         if (buy_strategy and volume_ma5_strategy and long_upper_shadow_strategy) or losing_streak:
             buy_strategy = False
@@ -303,13 +323,15 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
     # 计算整体盈亏比
     profit_ratio = total_profit_loss / initial_funds
 
-    # 输出整体盈亏比
-    print(f"总盈亏：{total_profit_loss}, 整体盈亏比: {profit_ratio * 100:.2f}%")
+    result_str = f"总盈亏：{total_profit_loss}, 整体盈亏比: {profit_ratio * 100:.2f}%"
+    print(result_str)
+
+    return result_str
 
 
-def process_stock(stock_code):
+def process_stock(stock_code, base_capital):
     try:
-        data = get_stock_data(stock_code, '20240101', '20250421')
+        data = get_stock_data(stock_code, '20240101', '20250425')
 
         calculate_indicators(data)
         capital, last_buy_date, result_str = trade_strategy(data, base_capital)
@@ -333,12 +355,11 @@ if __name__ == "__main__":
     stock_profits = get_stock_code()
     '''
     stock_profits = {
-        '600355': 0,
-        #'600739': 0
+        '002475': 0,
+        # '600739': 0
     }
 
     base_capital = 10000
-    capital = base_capital
 
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -347,7 +368,7 @@ if __name__ == "__main__":
             writer.writerow(['stock_code', 'result'])  # 写入表头
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-            futures = {executor.submit(process_stock, code): code for code in stock_profits.keys()}
+            futures = {executor.submit(process_stock, code, base_capital): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
                 stock_code, profit, capital, last_buy_date, result_str = future.result()
@@ -364,9 +385,9 @@ if __name__ == "__main__":
 
                 writer.writerow([stock_code, result_str])  # 写入一行记录
 
-    print(buy_map)
+            writer.writerow(['000000', cal_profit_to_loss_ratio(stock_profits, base_capital)])
 
-    cal_profit_to_loss_ratio(stock_profits, base_capital)
+    print(buy_map)
 
     # 业绩报表
     # data = ak.stock_yjbb_em(date="20240930")
@@ -376,6 +397,8 @@ if __name__ == "__main__":
     # 筹码分布
     # data = ak.stock_cyq_em('000796', adjust="qfq")
     # print(data)
+
+    # get_news_em()
 
     '''
     # get_board_concept_name_df()
