@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import concurrent.futures
 import csv
 
+from stock_holding import stock_holding
+
 
 def get_stock_code():
     df = pd.read_csv("stock_codes.csv", dtype={"code": str})  # 替换为你的实际文件名
@@ -128,7 +130,7 @@ def sell_price_strategy(high, low, atr):
     else:
         sell_price = low - 2 * atr
 
-    return sell_price
+    return round(sell_price, 2)
 
 
 # 是否涨停
@@ -174,10 +176,10 @@ def trade_strategy(stock_data, capital):
 
     for i in range(1, len(stock_data)):
         date = stock_data.index[i].date()
-
+        '''
         if date.strftime('%Y-%m-%d') == '2025-04-14':
             print("debug")
-
+        '''
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -223,7 +225,7 @@ def trade_strategy(stock_data, capital):
         volume_last3days = bool((volume > stock_data["成交量"].iloc[i - 1])
                                 and (volume > stock_data["成交量"].iloc[i - 2])
                                 and (stock_data["成交量"].iloc[i - 1] > stock_data["成交量"].iloc[i - 2]))
-        # volume_last3days = True
+        volume_last3days = True
 
         if volume_ma5_strategy and long_upper_shadow_strategy:
             cooldown_days = cooldown_days + 2
@@ -301,19 +303,18 @@ def trade_strategy(stock_data, capital):
     if capital < 0:
         capital = 0
 
-    # 打印交易记录
+    # 打印交易记录   
     for trade in trade_log:
         print(trade)
 
     if trade_count == 0:
-        result_str = f"\nStockCode: {stock_code}, 没有交易记录"
+        winning_rate = 0
     else:
-        result_str = (f"\nStockCode: {stock_code}, Final Capital: {capital:.2f} CNY, "
-                      f"Winning Rate: {(profit_count / trade_count) * 100:.2f}%,"
-                      f"持仓：{position}, 最后一次购买日期为：{buy_date}, 买入价格：{buy_price:.2f}")
-    print(result_str)
+        winning_rate = round(profit_count / trade_count * 100, 2)
 
-    return capital, buy_date, result_str
+    buy_stock = stock_holding(stock_code, round(capital, 2), winning_rate, position, buy_date, round(buy_price, 2))
+
+    return buy_stock
 
 
 def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
@@ -323,7 +324,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
     # 计算整体盈亏比
     profit_ratio = total_profit_loss / initial_funds
 
-    result_str = f"总盈亏：{total_profit_loss}, 整体盈亏比: {profit_ratio * 100:.2f}%"
+    result_str = f"总盈亏：{total_profit_loss:.2f}, 整体盈亏比: {profit_ratio * 100:.2f}%"
     print(result_str)
 
     return result_str
@@ -331,14 +332,14 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = get_stock_data(stock_code, '20240101', '20250425')
+        data = get_stock_data(stock_code, '20240101', '20250430')
 
         calculate_indicators(data)
-        capital, last_buy_date, result_str = trade_strategy(data, base_capital)
+        buy_stock = trade_strategy(data, base_capital)
 
-        profit = capital - base_capital
+        profit = buy_stock.capital - base_capital
 
-        return stock_code, profit, capital, last_buy_date, result_str
+        return buy_stock, profit
     except Exception as e:
         print(f"{stock_code} 处理失败: {e}")
         return stock_code, 0, 0, '1900-01-01 00:00:00', '处理失败'
@@ -355,7 +356,7 @@ if __name__ == "__main__":
     stock_profits = get_stock_code()
     '''
     stock_profits = {
-        '002475': 0,
+        '601579': 0,
         # '600739': 0
     }
 
@@ -371,19 +372,19 @@ if __name__ == "__main__":
             futures = {executor.submit(process_stock, code, base_capital): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
-                stock_code, profit, capital, last_buy_date, result_str = future.result()
+                buy_stock, profit = future.result()
 
-                stock_profits[stock_code] = profit
-                if str(last_buy_date) == today_str:
-                    buy_map[stock_code] = result_str
+                stock_profits[buy_stock.stock_code] = profit
+                if str(buy_stock.buy_date) == today_str:
+                    buy_map[buy_stock.stock_code] = buy_stock
 
-                if capital == 0:
-                    result_str = f"{stock_code} 模拟交易失败"
+                if buy_stock.capital == 0:
+                    result_str = f"{buy_stock.stock_code} 模拟交易失败"
                     print(result_str)
 
-                    writer.writerow([stock_code, result_str])
+                    writer.writerow([buy_stock.stock_code, result_str])
 
-                writer.writerow([stock_code, result_str])  # 写入一行记录
+                writer.writerow([buy_stock.stock_code, buy_stock])  # 写入一行记录
 
             writer.writerow(['000000', cal_profit_to_loss_ratio(stock_profits, base_capital)])
 
@@ -400,8 +401,6 @@ if __name__ == "__main__":
 
     # get_news_em()
 
-    '''
     # get_board_concept_name_df()
-    sell_price = sell_price_strategy(9.49, 8.72, 0.39)
-    print(sell_price)
-    '''
+    # sell_price = sell_price_strategy(10.85, 10.64, 0.24)
+    # print(sell_price)
