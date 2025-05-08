@@ -12,6 +12,7 @@ import csv
 from stock_holding import stock_holding
 
 
+# 获取股票代码
 def get_stock_code():
     df = pd.read_csv("stock_codes.csv", dtype={"code": str})  # 替换为你的实际文件名
 
@@ -22,6 +23,7 @@ def get_stock_code():
     return code_map
 
 
+# 获取股票数据
 def get_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
@@ -37,6 +39,7 @@ def get_stock_data(stock_code, start_date, end_date):
     return stock_data
 
 
+# 指标计算
 def calculate_indicators(stock_data):
     close = stock_data['收盘'].values
     high = stock_data['最高'].values
@@ -52,6 +55,8 @@ def calculate_indicators(stock_data):
                                                                                                        timeperiod=20,
                                                                                                        nbdevup=2,
                                                                                                        nbdevdn=2)
+    stock_data['BBANDS_width'] = (
+            (stock_data["BBANDS_upper"] - stock_data["BBANDS_middle"]) / stock_data["BBANDS_middle"])
 
     # 均线指标
     stock_data["ma10"] = talib.SMA(close, timeperiod=10)
@@ -111,6 +116,7 @@ def get_news_em():
     return stock_news_em_df
 
 
+# 持仓成本
 def get_holdings_cost(capital, price):
     shares_per_lot = 100
     max_shares = int(capital // price)
@@ -121,6 +127,7 @@ def get_holdings_cost(capital, price):
     return holdings
 
 
+# atr卖出价策略
 def sell_price_strategy(high, low, atr):
     height = high - low
 
@@ -165,6 +172,22 @@ def long_upper_shadow(open, close, high, low, highest_250):
         return bool(upper_shadow > body * 2)
 
 
+# 预期买入股价
+def expected_buy_price(open, close, high, low, highest_250):
+    '''
+    1、ma5从下往上穿过ma10，且ma5 > ma10
+    2、
+    '''
+    if high == highest_250:
+        return round(high * 1.05, 2)
+
+
+# 强制卖出日（外部情绪抛压极强，不适合任何操作）
+def force_sell_day(formatted_date):
+    return formatted_date in ['2024-10-08', '2025-04-07']
+
+
+# 交易策略
 def trade_strategy(stock_data, capital):
     buy_date = ''
     position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
@@ -182,11 +205,11 @@ def trade_strategy(stock_data, capital):
     profit_count = 0
 
     for i in range(1, len(stock_data)):
-        date = stock_data.index[i].date()
-        '''
-        if date.strftime('%Y-%m-%d') == '2024-08-05':
+        formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
+
+        if formatted_date == '2024-04-22':
             print("debug")
-        '''
+
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -263,32 +286,35 @@ def trade_strategy(stock_data, capital):
         if (buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak:
             buy_strategy = False
 
-        # 买入条件
-        if buy_strategy:
-            buy_price = close
-            position = 1
-            holdings = get_holdings_cost(capital, buy_price)
-            capital -= holdings * buy_price
-            buy_date = stock_data.index[i]
-            buy_date_idx = i
-            trade_log.append(f"BUY: {stock_data.index[i]} at {buy_price}")
-            atr_sell_price = sell_price_strategy(high, low, atr)
+        if position == 0:
+            # 买入条件
+            if buy_strategy:
+                buy_price = close
+                position = 1
+                holdings = get_holdings_cost(capital, buy_price)
+                capital -= holdings * buy_price
+                buy_date = stock_data.index[i]
+                buy_date_idx = i
+                trade_log.append(f"BUY: {stock_data.index[i]} at {buy_price}")
+                atr_sell_price = sell_price_strategy(high, low, atr)
 
         # 卖出条件
-        elif position == 1:
+        else:
             days_held = i - buy_date_idx
             profit_ratio = (close - buy_price) / buy_price
             profit_strategy = profit_ratio < -0.08
             days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
             days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
+            force_sell_strategy = force_sell_day(formatted_date)
 
             # days_increase_strategy = False
             '''
             sell_strategy = (profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy
                              or (volume_ma5_strategy and long_upper_shadow_strategy) or losing_streak)
             '''
-            sell_strategy = atr_strategy or bbands_sell_strategy or heavy_volume_sell_off_strategy or profit_strategy
+            sell_strategy = (atr_strategy or bbands_sell_strategy or heavy_volume_sell_off_strategy or profit_strategy
+                             or force_sell_strategy)
 
             if is_limit_up:
                 sell_strategy = False
@@ -316,11 +342,11 @@ def trade_strategy(stock_data, capital):
 
     if capital < 0:
         capital = 0
-    '''
+
     # 打印交易记录   
     for trade in trade_log:
         print(trade)
-    '''
+
     if trade_count == 0:
         winning_rate = 0
     else:
@@ -362,17 +388,17 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-
+    '''
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-    '''
+    
     stock_profits = get_stock_code()
-    '''
+    
     stock_profits = {
-        '600025': 0,
+        '002261': 0,
         # '002261': 0
     }
 
@@ -406,7 +432,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-
+    '''
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
     #                                 adjust="qfq")
     # print(stock_data)
@@ -422,5 +448,5 @@ if __name__ == "__main__":
     # get_news_em()
 
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(35.7, 33.72, 1.91)
-    # print(sell_price)
+    sell_price = sell_price_strategy(17.25, 16.39, 0.94)
+    print(sell_price)
