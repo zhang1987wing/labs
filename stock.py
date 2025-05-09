@@ -388,17 +388,17 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-    '''
+
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-    
+    '''
     stock_profits = get_stock_code()
-    
+    '''
     stock_profits = {
-        '002261': 0,
+        '002568': 0,
         # '002261': 0
     }
 
@@ -432,7 +432,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-    '''
+
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
     #                                 adjust="qfq")
     # print(stock_data)
@@ -448,5 +448,5 @@ if __name__ == "__main__":
     # get_news_em()
 
     # get_board_concept_name_df()
-    sell_price = sell_price_strategy(17.25, 16.39, 0.94)
-    print(sell_price)
+    # sell_price = sell_price_strategy(25.63, 25.15, 1.05)
+    # print(sell_price)
