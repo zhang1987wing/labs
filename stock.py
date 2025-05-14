@@ -257,7 +257,7 @@ def trade_strategy(stock_data, capital):
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2025-02-26':
+        if formatted_date == '2025-05-13':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -285,18 +285,17 @@ def trade_strategy(stock_data, capital):
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
         rsi = stock_data['rsi'].iloc[i]
 
+        dmi_strategy = dmi_plus > dmi_minus
         macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
         # macd_strategy = True
-        dmi_strategy = dmi_plus > dmi_minus
         # dmi_strategy = True
         bbands_strategy = True
-        ma510_strategy = ma5 > ma10
+        ma510_strategy = ma5 >= ma10
         ma20_strategy = ((ma20 > stock_data["ma20"].iloc[i - 1])
                          and (ma20 > stock_data["ma20"].iloc[i - 2])
                          and (stock_data["ma20"].iloc[i - 1] > stock_data["ma20"].iloc[i - 2]))
         ma20_strategy = True
-        ma60_strategy = close > ma60
-        # ma60_strategy = True
+        # ma60_strategy = close > ma60
         heavy_volume_sell_off_strategy = heavy_volume_sell_off(volume, volume_ma5, open, close, high, low,
                                                                days_increase)
         # volume_ma5_strategy = False
@@ -310,7 +309,7 @@ def trade_strategy(stock_data, capital):
                                 and (volume > stock_data["成交量"].iloc[i - 2])
                                 and (stock_data["成交量"].iloc[i - 1] > stock_data["成交量"].iloc[i - 2]))
         volume_last3days = True
-        bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1])
+        bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1] or close > BBANDS_middle)
         bbands_sell_strategy = close < BBANDS_middle
         rsi_strategy = bool(rsi >= 83)
 
@@ -356,12 +355,11 @@ def trade_strategy(stock_data, capital):
             days_held = i - buy_date_idx
             profit_ratio = (close - buy_price) / buy_price
             profit_strategy = profit_ratio < -0.08
-            days_held_strategy = days_held > 5
+            # days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
-            days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
+            # days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
             force_sell_strategy = force_sell_day(formatted_date)
 
-            # days_increase_strategy = False
             '''
             sell_strategy = (profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy
                              or (volume_ma5_strategy and long_upper_shadow_strategy) or losing_streak)
@@ -426,7 +424,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = get_stock_data(stock_code, '20240101', '20250513')
+        data = get_stock_data(stock_code, '20240101', '20250514')
 
         calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -450,7 +448,7 @@ if __name__ == "__main__":
     '''
     stock_profits = get_stock_code()
     '''
-    stock_key = '600392'
+    stock_key = '000958'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
@@ -487,9 +485,9 @@ if __name__ == "__main__":
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
     
-    get_news_em(stock_key)
+    # get_news_em(stock_key)
     
-    get_lhb_info('20250514')
+    # get_lhb_info('20250514')
 
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
     #                                 adjust="qfq")
