@@ -167,7 +167,6 @@ def cal_limit_up(prev_price, current_price):
 
 # 放量大跌，抛盘压力
 def heavy_volume_sell_off(volume, avg_volume, open_price, close_price, high_price, low_price, days_increase):
-
     if high_price == low_price:
         rate = 1
     else:
@@ -204,6 +203,38 @@ def expected_buy_price(open, close, high, low, highest_250):
 # 强制卖出日（外部情绪抛压极强，不适合任何操作）
 def force_sell_day(formatted_date):
     return formatted_date in ['2024-10-08', '2025-04-07']
+
+
+# 查询龙虎榜信息（默认查询最近一个交易日）
+def get_lhb_info(start_date=None):
+    if start_date:
+        lhb_df = ak.stock_lhb_detail_em(start_date=start_date, end_date=start_date)
+    else:
+        lhb_df = ak.stock_lhb_detail_em()
+
+    if lhb_df.empty:
+        print("无龙虎榜数据。")
+        return
+
+    # 按照市场总成交额降序排序
+    lhb_df = lhb_df.sort_values(by='市场总成交额', ascending=False)
+
+    # 主板股票代码前缀
+    main_board_prefixes = ("60", "000")
+
+    # 过滤出主板代码，并取前 10 条
+    lhb_df_main = lhb_df[lhb_df["代码"].str.startswith(main_board_prefixes)]
+
+    # 按股票代码去重，保留第一条记录
+    lhb_df_main_unique = lhb_df_main.drop_duplicates(subset="代码", keep="first")
+
+    latest_lhb_df_main_unique = (lhb_df_main_unique[['代码', '名称', '收盘价', '涨跌幅', '市场总成交额', '龙虎榜成交额', '换手率', '流通市值']]
+                                 .head(10))
+
+    print(f"\n龙虎榜（市场总成交额）：\n")
+    for _, row in latest_lhb_df_main_unique.iterrows():
+        print(f"- {row['代码']} | {row['名称']} | {row['收盘价']} | {row['涨跌幅']} | {row['市场总成交额']} "
+              f"| {row['龙虎榜成交额']} | {row['换手率']} | {row['流通市值']}\n")
 
 
 # 交易策略
@@ -419,8 +450,9 @@ if __name__ == "__main__":
     '''
     stock_profits = get_stock_code()
     '''
+    stock_key = '600392'
     stock_profits = {
-        '601012': 0,
+        stock_key: 0,
         # '002261': 0
     }
 
@@ -454,8 +486,10 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-
-    get_news_em(601012)
+    
+    get_news_em(stock_key)
+    
+    get_lhb_info('20250514')
 
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
     #                                 adjust="qfq")
@@ -470,5 +504,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(16.13, 15.53, 0.44)
+    # sell_price = sell_price_strategy(7.87, 7.02, 0.37)
     # print(sell_price)
