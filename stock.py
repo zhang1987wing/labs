@@ -80,6 +80,9 @@ def calculate_indicators(stock_data):
     # atr指标
     stock_data["atr"] = talib.ATR(high, low, close, timeperiod=14)
 
+    # rsi指标
+    stock_data["rsi"] = talib.RSI(close, timeperiod=14)
+
 
 # 获取板块行情数据
 def get_board_concept_name_df():
@@ -111,8 +114,24 @@ def get_financial_abstract(stock_code):
 
 
 # 获取东方财富网资讯
-def get_news_em():
-    stock_news_em_df = ak.stock_news_em()
+def get_news_em(stock_code):
+    stock_news_em_df = ak.stock_news_em(symbol=stock_code)
+
+    if stock_news_em_df.empty:
+        print(f"{stock_code} 无相关新闻")
+        return
+
+    # 将 date 字段转为 datetime 类型并降序排序
+    stock_news_em_df['发布时间'] = pd.to_datetime(stock_news_em_df['发布时间'])
+    news_df = stock_news_em_df.sort_values(by='发布时间', ascending=False)
+
+    # 取前 10 条
+    latest_news = news_df[['发布时间', '新闻标题', '新闻内容']].head(10)
+
+    print(f"\n【{stock_code}】最新新闻（按时间排序）：\n")
+    for _, row in latest_news.iterrows():
+        print(f"- {row['发布时间'].strftime('%Y-%m-%d %H:%M:%S')} | {row['新闻标题']}\n  摘要：{row['新闻内容']}\n")
+
     return stock_news_em_df
 
 
@@ -207,7 +226,7 @@ def trade_strategy(stock_data, capital):
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-04-22':
+        if formatted_date == '2025-02-26':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -233,8 +252,9 @@ def trade_strategy(stock_data, capital):
         dmi_minus = stock_data['dmi_minus'].iloc[i]
         atr = stock_data['atr'].iloc[i]
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
+        rsi = stock_data['rsi'].iloc[i]
 
-        macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2
+        macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
         # macd_strategy = True
         dmi_strategy = dmi_plus > dmi_minus
         # dmi_strategy = True
@@ -261,6 +281,7 @@ def trade_strategy(stock_data, capital):
         volume_last3days = True
         bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1])
         bbands_sell_strategy = close < BBANDS_middle
+        rsi_strategy = bool(rsi >= 83)
 
         if heavy_volume_sell_off_strategy and long_upper_shadow_strategy:
             cooldown_days = cooldown_days + 2
@@ -283,7 +304,8 @@ def trade_strategy(stock_data, capital):
         '''
         buy_strategy = position == 0 and macd_strategy and dmi_strategy and ma510_strategy and bbands_buy_strategy
 
-        if (buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak:
+        if ((buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak
+                or rsi_strategy):
             buy_strategy = False
 
         if position == 0:
@@ -373,7 +395,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = get_stock_data(stock_code, '20240101', '20250507')
+        data = get_stock_data(stock_code, '20240101', '20250513')
 
         calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -398,7 +420,7 @@ if __name__ == "__main__":
     stock_profits = get_stock_code()
     '''
     stock_profits = {
-        '002568': 0,
+        '601012': 0,
         # '002261': 0
     }
 
@@ -433,6 +455,8 @@ if __name__ == "__main__":
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
 
+    get_news_em(601012)
+
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
     #                                 adjust="qfq")
     # print(stock_data)
@@ -445,8 +469,6 @@ if __name__ == "__main__":
     # data = ak.stock_cyq_em('000796', adjust="qfq")
     # print(data)
 
-    # get_news_em()
-
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(25.63, 25.15, 1.05)
+    # sell_price = sell_price_strategy(16.13, 15.53, 0.44)
     # print(sell_price)
