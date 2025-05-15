@@ -330,6 +330,7 @@ def trade_strategy(stock_data, capital):
         volume_last3days = True
         bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1] or close > BBANDS_middle)
         bbands_sell_strategy = close < BBANDS_middle
+        over_sold_strategy = bool(rsi < 25 and close < BBANDS_lower)
         rsi_strategy = bool(rsi >= 83)
 
         if heavy_volume_sell_off_strategy and long_upper_shadow_strategy:
