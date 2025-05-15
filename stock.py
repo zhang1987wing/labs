@@ -10,6 +10,7 @@ import concurrent.futures
 import csv
 
 from stock_holding import stock_holding
+from trade_log import trade_log
 
 
 # 获取股票代码
@@ -194,7 +195,11 @@ def long_upper_shadow(open, close, high, low, highest_250):
 def expected_buy_price(open, close, high, low, highest_250):
     '''
     1、ma5从下往上穿过ma10，且ma5 > ma10
-    2、
+    2、macd金叉发生在macd附近
+    3、布林带收盘价大于中线
+    4、RSI未超过80
+    5、收盘价大于各个均线
+    5、均线显示
     '''
     if high == highest_250:
         return round(high * 1.05, 2)
@@ -228,8 +233,9 @@ def get_lhb_info(start_date=None):
     # 按股票代码去重，保留第一条记录
     lhb_df_main_unique = lhb_df_main.drop_duplicates(subset="代码", keep="first")
 
-    latest_lhb_df_main_unique = (lhb_df_main_unique[['代码', '名称', '收盘价', '涨跌幅', '市场总成交额', '龙虎榜成交额', '换手率', '流通市值']]
-                                 .head(10))
+    latest_lhb_df_main_unique = (
+        lhb_df_main_unique[['代码', '名称', '收盘价', '涨跌幅', '市场总成交额', '龙虎榜成交额', '换手率', '流通市值']]
+        .head(10))
 
     print(f"\n龙虎榜（市场总成交额）：\n")
     for _, row in latest_lhb_df_main_unique.iterrows():
@@ -238,6 +244,13 @@ def get_lhb_info(start_date=None):
 
 
 # 交易策略
+def build_trade_log(stock_code, price, operation, operate_date, profit, days_held, macd_signal_days, balance):
+    if operation == 'BUY':
+        return trade_log(stock_code, price, "BUY", operate_date, 0, 0, macd_signal_days, 0)
+    else:
+        return trade_log(stock_code, price, "SELL", operate_date, profit, days_held, macd_signal_days, balance)
+
+
 def trade_strategy(stock_data, capital):
     buy_date = ''
     position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
@@ -249,15 +262,16 @@ def trade_strategy(stock_data, capital):
     cooldown_days = 0
     last_sell_idx = 0
 
-    trade_log = []
+    trade_logs = []
     stock_code = stock_data["股票代码"].iloc[0]
     trade_count = 0
     profit_count = 0
+    macd_signal_days = 0
 
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2025-05-13':
+        if formatted_date == '2024-02-26':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -285,8 +299,13 @@ def trade_strategy(stock_data, capital):
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
         rsi = stock_data['rsi'].iloc[i]
 
+        if dif > dea:
+            macd_signal_days = macd_signal_days + 1
+        else:
+            macd_signal_days = 0
+
         dmi_strategy = dmi_plus > dmi_minus
-        macd_strategy = 0 < macd and dif > dea and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
+        macd_strategy = 0 < macd and macd_signal_days > 0 and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
         # macd_strategy = True
         # dmi_strategy = True
         bbands_strategy = True
@@ -347,7 +366,7 @@ def trade_strategy(stock_data, capital):
                 capital -= holdings * buy_price
                 buy_date = stock_data.index[i]
                 buy_date_idx = i
-                trade_log.append(f"BUY: {stock_data.index[i]} at {buy_price}")
+                trade_logs.append(build_trade_log(stock_code, buy_price, "BUY", buy_date, 0, 0, macd_signal_days, 0))
                 atr_sell_price = sell_price_strategy(high, low, atr)
 
         # 卖出条件
@@ -377,10 +396,10 @@ def trade_strategy(stock_data, capital):
                 holdings = 0
                 last_sell_idx = i
                 cooldown_days = cooldown_days + 5
-                trade_log.append(
-                    f"SELL: {stock_data.index[i].date()} at {sell_price:.2f} | Profit: {profit_ratio * 100:.2f}% | "
-                    f"Days Held: {days_held} | Balance: {capital:.2f}"
-                )
+                macd_signal_days = 0
+
+                trade_logs.append(build_trade_log(stock_code, f"{sell_price:.2f}", "SELL", stock_data.index[i].date(),
+                                                  f"{profit_ratio * 100:.2f}%", days_held, 0, f"{capital:.2f}"))
 
                 trade_count = trade_count + 1
 
@@ -395,8 +414,8 @@ def trade_strategy(stock_data, capital):
         capital = 0
 
     # 打印交易记录   
-    for trade in trade_log:
-        print(trade)
+    for trade_log in trade_logs:
+        print(trade_log)
 
     if trade_count == 0:
         winning_rate = 0
@@ -424,7 +443,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = get_stock_data(stock_code, '20240101', '20250514')
+        data = get_stock_data(stock_code, '20240101', '20250515')
 
         calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -448,7 +467,7 @@ if __name__ == "__main__":
     '''
     stock_profits = get_stock_code()
     '''
-    stock_key = '000958'
+    stock_key = '603843'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
@@ -484,9 +503,9 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-    
+
     # get_news_em(stock_key)
-    
+
     # get_lhb_info('20250514')
 
     # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
@@ -502,5 +521,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(7.87, 7.02, 0.37)
+    # sell_price = sell_price_strategy(18.73, 17.4, 1.07)
     # print(sell_price)
