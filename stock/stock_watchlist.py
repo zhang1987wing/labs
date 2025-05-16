@@ -41,7 +41,7 @@ def watchlist_strategy(stock_data):
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-02-08':
+        if formatted_date == '2024-02-02':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -69,40 +69,11 @@ def watchlist_strategy(stock_data):
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
         rsi = stock_data['rsi'].iloc[i]
 
-        if dif > dea:
-            macd_signal_days = macd_signal_days + 1
-        else:
-            macd_signal_days = 0
+        ma250_oversell_strategy = (ma250 - close) / ma250 > 0.3
+        bbands_oversell_strategy = close < BBANDS_lower
+        rsi_oversell_strategy = rsi < 25
 
-        dmi_strategy = dmi_plus > dmi_minus
-        macd_strategy = 0 < macd and macd_signal_days > 0 and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
-        # macd_strategy = True
-        # dmi_strategy = True
-        bbands_strategy = True
-        ma510_strategy = ma5 >= ma10
-        ma20_strategy = ((ma20 > stock_data["ma20"].iloc[i - 1])
-                         and (ma20 > stock_data["ma20"].iloc[i - 2])
-                         and (stock_data["ma20"].iloc[i - 1] > stock_data["ma20"].iloc[i - 2]))
-        ma20_strategy = True
-        # ma60_strategy = close > ma60
-        heavy_volume_sell_off_strategy = stock_indicators.heavy_volume_sell_off(volume, volume_ma5, open, close, high,
-                                                                                low,
-                                                                                days_increase)
-        # volume_ma5_strategy = False
-        # losing_streak = (close < prev_close) and (prev_close < stock_data["收盘"].iloc[i - 2])
-        losing_streak = False
-        long_upper_shadow_strategy = stock_indicators.long_upper_shadow(open, close, high, low, highest_250)
-        # long_upper_shadow_strategy = False
-        is_limit_up = stock_indicators.cal_limit_up(prev_close, close)
-        # volume,连续3天放量
-        volume_last3days = bool((volume > stock_data["成交量"].iloc[i - 1])
-                                and (volume > stock_data["成交量"].iloc[i - 2])
-                                and (stock_data["成交量"].iloc[i - 1] > stock_data["成交量"].iloc[i - 2]))
-        volume_last3days = True
-        bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1] or close > BBANDS_middle)
-        bbands_sell_strategy = close < BBANDS_middle
-        over_sold_strategy = bool(rsi < 25 and close < BBANDS_lower)
-        rsi_strategy = bool(rsi >= 83)
+        over_sold_strategy = bool(rsi_oversell_strategy and bbands_oversell_strategy and ma250_oversell_strategy)
 
         add_watchlist = over_sold_strategy
 
@@ -124,12 +95,15 @@ def watchlist_strategy(stock_data):
     for trade_log in trade_logs:
         print(trade_log)
 
-    return trade_logs[len(trade_logs) - 1]
+    if len(trade_logs) == 0:
+        return stock_watching(stock_code, '1900-01-01', 0, 0)
+    else:
+        return trade_logs[len(trade_logs) - 1]
 
 
 def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250516')
+        data = stock_indicators.get_stock_data(stock_code, '20230101', '20250516')
 
         stock_indicators.calculate_indicators(data)
         watchlist_stock = watchlist_strategy(data)
@@ -151,7 +125,7 @@ if __name__ == "__main__":
 
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '603843'
+    stock_key = '002717'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
