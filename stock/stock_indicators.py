@@ -3,6 +3,17 @@ import pandas as pd
 import talib
 
 
+# 获取股票代码
+def get_stock_code():
+    df = pd.read_csv("stock_codes.csv", dtype={"code": str})  # 替换为你的实际文件名
+
+    # 创建map：key为code，value为0
+    code_map = {str(code): 0 for code in df['code']}
+
+    # 输出结果
+    return code_map
+
+
 # 获取股票数据
 def get_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
@@ -168,20 +179,6 @@ def long_upper_shadow(open, close, high, low, highest_250):
         return bool(upper_shadow > body)
     else:
         return bool(upper_shadow > body * 2)
-
-
-# 预期买入股价
-def expected_buy_price(open, close, high, low, highest_250):
-    '''
-    1、ma5从下往上穿过ma10，且ma5 > ma10
-    2、macd金叉发生在macd附近
-    3、布林带收盘价大于中线
-    4、RSI未超过80
-    5、收盘价大于各个均线
-    5、均线显示
-    '''
-    if high == highest_250:
-        return round(high * 1.05, 2)
 
 
 # 强制卖出日（外部情绪抛压极强，不适合任何操作）

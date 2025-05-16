@@ -10,17 +10,6 @@ from stock_holding import stock_holding
 from trade_log import trade_log
 
 
-# 获取股票代码
-def get_stock_code():
-    df = pd.read_csv("stock_codes.csv", dtype={"code": str})  # 替换为你的实际文件名
-
-    # 创建map：key为code，value为0
-    code_map = {str(code): 0 for code in df['code']}
-
-    # 输出结果
-    return code_map
-
-
 # 交易日志
 def build_trade_log(stock_code, price, operation, operate_date, profit, days_held, macd_signal_days, balance):
     if operation == 'BUY':
@@ -300,5 +289,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(18.73, 17.4, 1.07)
+    # sell_price = stock_indicators.sell_price_strategy(7.4, 6.76, 0.38)
     # print(sell_price)

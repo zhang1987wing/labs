@@ -4,15 +4,28 @@ from datetime import datetime
 import concurrent.futures
 import csv
 
-from stock import stock_indicators
-from stock.stock_holding import stock_holding
+import stock_indicators
+from stock_watching import stock_watching
 
 
-def trade_strategy(stock_data, capital):
+# 预期买入股价
+def expected_buy_price(open, close, high, low, highest_250):
+    """
+    1、ma5从下往上穿过ma10，且ma5 > ma10
+    2、macd金叉发生在macd附近
+    3、布林带收盘价大于中线
+    4、RSI未超过80
+    5、收盘价大于各个均线
+    5、均线显示
+    """
+    if high == highest_250:
+        return round(high * 1.05, 2)
+
+
+def watchlist_strategy(stock_data):
     buy_date = ''
     position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
     buy_price = 0
-    # capital = 100000  # 初始资金
     holdings = 0
     buy_date_idx = 0
     atr_sell_price = 0.0
@@ -28,7 +41,7 @@ def trade_strategy(stock_data, capital):
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-02-26':
+        if formatted_date == '2024-02-08':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -91,135 +104,59 @@ def trade_strategy(stock_data, capital):
         over_sold_strategy = bool(rsi < 25 and close < BBANDS_lower)
         rsi_strategy = bool(rsi >= 83)
 
-        if heavy_volume_sell_off_strategy and long_upper_shadow_strategy:
-            cooldown_days = cooldown_days + 2
+        add_watchlist = over_sold_strategy
 
-        '''
-        # 检查是否在冷却期内
-        if last_sell_idx != 0:
-            days_since_sell = i - last_sell_idx
-            if days_since_sell <= cooldown_days:
-                # 在冷却期内，不允许买入或卖出
-                continue
-        '''
-
-        if cooldown_days > 0 and position == 0:
-            cooldown_days = cooldown_days - 1
-            continue
-        '''
-        buy_strategy = (position == 0 and macd_strategy and dmi_strategy and ma510_strategy
-                        and ma20_strategy and ma60_strategy and volume_last3days)
-        '''
-        buy_strategy = position == 0 and macd_strategy and dmi_strategy and ma510_strategy and bbands_buy_strategy
-
-        if ((buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak
-                or rsi_strategy):
-            buy_strategy = False
-
-        if position == 0:
-            # 买入条件
-            if buy_strategy:
+        if add_watchlist:
+            if position == 0:
                 buy_price = close
                 position = 1
-                holdings = stock_indicators.get_holdings_cost(capital, buy_price)
-                capital -= holdings * buy_price
                 buy_date = stock_data.index[i]
-                buy_date_idx = i
-                atr_sell_price = stock_indicators.sell_price_strategy(high, low, atr)
-
-        # 卖出条件
+                trade_logs.append(stock_watching(stock_code, buy_date.date(), 1, buy_price))
+            else:
+                position = 1
+                trade_log = trade_logs[len(trade_logs) - 1]
+                trade_log.watching_days = trade_log.watching_days + 1
         else:
-            days_held = i - buy_date_idx
-            profit_ratio = (close - buy_price) / buy_price
-            profit_strategy = profit_ratio < -0.08
-            # days_held_strategy = days_held > 5
-            atr_strategy = close < atr_sell_price
-            # days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
-            force_sell_strategy = stock_indicators.force_sell_day(formatted_date)
-
-            '''
-            sell_strategy = (profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy
-                             or (volume_ma5_strategy and long_upper_shadow_strategy) or losing_streak)
-            '''
-            sell_strategy = (atr_strategy or bbands_sell_strategy or heavy_volume_sell_off_strategy or profit_strategy
-                             or force_sell_strategy)
-
-            if is_limit_up:
-                sell_strategy = False
-
-            if sell_strategy:
-                sell_price = atr_sell_price if atr_strategy else close
-                position = 0
-                capital += holdings * sell_price
-                holdings = 0
-                last_sell_idx = i
-                cooldown_days = cooldown_days + 5
-                macd_signal_days = 0
-
-                # trade_logs.append(build_trade_log(stock_code, f"{sell_price:.2f}", "SELL", stock_data.index[i].date(),
-                #                                   f"{profit_ratio * 100:.2f}%", days_held, 0, f"{capital:.2f}"))
-
-                trade_count = trade_count + 1
-
-                if profit_ratio > 0:
-                    profit_count = profit_count + 1
-
-    # 最终资金 + 持有股票市值
-    if position == 1:
-        capital += holdings * stock_data["收盘"].iloc[-1]
-
-    if capital < 0:
-        capital = 0
+            position = 0
+            continue
 
     # 打印交易记录
     for trade_log in trade_logs:
         print(trade_log)
 
-    if trade_count == 0:
-        winning_rate = 0
-    else:
-        winning_rate = round(profit_count / trade_count * 100, 2)
-
-    buy_stock = stock_holding(stock_code, round(capital, 2), winning_rate, position, buy_date, round(buy_price, 2))
-
-    print(buy_stock)
-    return buy_stock
+    return trade_logs[len(trade_logs) - 1]
 
 
-def process_stock(stock_code, base_capital):
+def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250515')
+        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250516')
 
         stock_indicators.calculate_indicators(data)
-        buy_stock = trade_strategy(data, base_capital)
+        watchlist_stock = watchlist_strategy(data)
 
-        profit = buy_stock.capital - base_capital
-
-        return buy_stock, profit
+        return watchlist_stock
     except Exception as e:
         print(f"\n{stock_code} 处理失败: {e}")
 
-        return stock_holding(stock_code, round(base_capital, 2), 0, 0, '20240101', round(0, 2)), 0
+        return stock_watching(stock_code, '1900-01-01', 0, 0)
 
 
 if __name__ == "__main__":
 
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
-    output_file = "buy_results.csv"
+    output_file = "watchlist_results.csv"
     file_exists = os.path.exists(output_file)
 
-    buy_map = {}
-    '''
-    stock_profits = get_stock_code()
+    watching_map = {}
+
+    stock_profits = stock_indicators.get_stock_code()
     '''
     stock_key = '603843'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
     }
-
-    base_capital = 10000
-
+    '''
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
 
@@ -227,42 +164,15 @@ if __name__ == "__main__":
             writer.writerow(['stock_code', 'result'])  # 写入表头
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-            futures = {executor.submit(process_stock, code, base_capital): code for code in stock_profits.keys()}
+            futures = {executor.submit(process_stock, code): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
-                buy_stock, profit = future.result()
+                watching_stock = future.result()
 
-                stock_profits[buy_stock.stock_code] = profit
-                if str(buy_stock.buy_date) == today_str:
-                    buy_map[buy_stock.stock_code] = buy_stock
+                if str(watching_stock.watching_date) == today_str:
+                    watching_map[watching_stock.stock_code] = watching_stock
 
-                if buy_stock.capital == 0:
-                    result_str = f"{buy_stock.stock_code} 模拟交易失败"
-                    print(result_str)
+                writer.writerow([watching_stock.stock_code, watching_stock])  # 写入一行记录
 
-                    writer.writerow([buy_stock.stock_code, result_str])
-
-                writer.writerow([buy_stock.stock_code, buy_stock])  # 写入一行记录
-
-    print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
-    print(buy_map)
-
-    # get_news_em(stock_key)
-
-    # get_lhb_info('20250514')
-
-    # stock_data = ak.stock_zh_a_hist(symbol='002261', period="daily", start_date='20240101', end_date='20250506',
-    #                                 adjust="qfq")
-    # print(stock_data)
-    # 业绩报表
-    # data = ak.stock_yjbb_em(date="20240930")
-
-    # print(data.head())
-
-    # 筹码分布
-    # data = ak.stock_cyq_em('000796', adjust="qfq")
-    # print(data)
-
-    # get_board_concept_name_df()
-    # sell_price = sell_price_strategy(18.73, 17.4, 1.07)
-    # print(sell_price)
+    print(f'\n处于观察的股票总量为：{len(watching_map)}')
+    print(watching_map)
