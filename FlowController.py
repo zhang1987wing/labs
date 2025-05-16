@@ -7,7 +7,7 @@ import GetInstagramVideoUrl
 import HandleCsv
 import HandleVideo
 
-username = 'petschanneltv'
+username = 'sogoodshoot'
 filename = f'{username}_video_links.csv'
 collected_links = set()
 
@@ -24,14 +24,15 @@ try:
     for row in updated_rows:
         link = row[0]
 
+        if row[1] == 'True' or row[1] == 'is_used':
+            continue
+
         print("\n收集到的Instagram分享链接:")
         print(link)
 
-        if row[1] == 'True':
-            continue
-
         # 从分享链接中获取mp4链接
         mp4_links = ConvertInstagram.convert_instagram_video(link)
+        # print(mp4_links)
 
         if len(mp4_links) != 0:
             row[1] = 'True'
