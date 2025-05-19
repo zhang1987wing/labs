@@ -226,15 +226,15 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-
+    '''
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-    '''
+    
     stock_profits = get_stock_code()
-    '''
+    
     stock_key = '603317'
     stock_profits = {
         stock_key: 0,
@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-
+    '''
     # get_news_em(stock_key)
 
     # get_lhb_info('20250514')
@@ -289,5 +289,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = stock_indicators.sell_price_strategy(7.4, 6.76, 0.38)
-    # print(sell_price)
+    sell_price = stock_indicators.sell_price_strategy(11.73, 10.85, 0.47)
+    print(sell_price)

@@ -74,7 +74,7 @@ def func_ma5_golden_cross_strategy(stock_data):
         # debug
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2025-03-12':
+        if formatted_date == '2024-09-03':
             print("debug")
 
         stock_code = stock_data["股票代码"].iloc[0]
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002688'
+    stock_key = '002261'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
