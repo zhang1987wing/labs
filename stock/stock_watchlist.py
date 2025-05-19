@@ -67,42 +67,51 @@ def func_oversell_strategy(stock_data):
 
 # ma5金叉策略
 def func_ma5_golden_cross_strategy(stock_data):
-    position = 0  # 持仓状态 (0: 空仓, 1: 持仓)
     trade_logs = []
+    watchlist = []
 
     for i in range(1, len(stock_data)):
         # debug
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-02-02':
+        if formatted_date == '2025-03-12':
             print("debug")
 
         stock_code = stock_data["股票代码"].iloc[0]
 
         close = stock_data["收盘"].iloc[i]
-        ma5 = round(stock_data["ma5"].iloc[i], 2)
-        ma10 = round(stock_data["ma10"].iloc[i], 2)
-        ma60 = round(stock_data["ma60"].iloc[i], 2)
+        ma5 = stock_data["ma5"].iloc[i]
+        ma10 = stock_data["ma10"].iloc[i]
+        ma60 = stock_data["ma60"].iloc[i]
 
         # ma5均线金叉策略
         ma510_strategy = bool(ma5 > ma10 and stock_data["ma5"].iloc[i - 1] <= stock_data["ma10"].iloc[i - 1])
-        ma60_strategy = close > ma60
+        ma560_strategy = bool(ma5 > ma60 and stock_data["ma5"].iloc[i - 1] <= stock_data["ma60"].iloc[i - 1])
 
-        add_watchlist = ma510_strategy and ma60_strategy
+        if ma510_strategy:
+            add_date = stock_data.index[i]
+            watchlist.append(stock_watching(stock_code, add_date.date(), 1, close))
 
-        if add_watchlist:
-            if position == 0:
-                buy_price = close
-                position = 1
-                buy_date = stock_data.index[i]
-                trade_logs.append(stock_watching(stock_code, buy_date.date(), 1, buy_price))
+        if len(watchlist) > 0:
+            if ma5 < ma10 or ma560_strategy:
+                trade_log = watchlist[len(watchlist) - 1]
+                trade_log.end_date = stock_data.index[i]
+
+                if ma5 < ma10:
+                    trade_log.reason = 'ma5小于ma10'
+
+                if ma560_strategy:
+                    if close < trade_log.watching_price:
+                        trade_log.reason = 'ma5与ma60发生金叉，但收盘价格小于加入价格'
+                    else:
+                        trade_log.reason = 'ma5与ma60发生金叉'
+
+                trade_logs.append(watchlist[len(watchlist) - 1])
+                watchlist.clear()
+
             else:
-                position = 1
-                trade_log = trade_logs[len(trade_logs) - 1]
+                trade_log = watchlist[len(watchlist) - 1]
                 trade_log.watching_days = trade_log.watching_days + 1
-        else:
-            position = 0
-            continue
 
     return trade_logs
 
@@ -126,7 +135,7 @@ def get_watchlist(stock_data):
 
 def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20230101', '20250516')
+        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250516')
 
         stock_indicators.calculate_indicators(data)
         watchlist_stock = get_watchlist(data)

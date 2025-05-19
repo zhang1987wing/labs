@@ -1,6 +1,7 @@
 import akshare as ak
 import pandas as pd
 import talib
+import numpy as np
 
 
 # 获取股票代码
@@ -50,11 +51,11 @@ def calculate_indicators(stock_data):
             (stock_data["BBANDS_upper"] - stock_data["BBANDS_middle"]) / stock_data["BBANDS_middle"])
 
     # 均线指标
-    stock_data["ma10"] = talib.SMA(close, timeperiod=10)
-    stock_data["ma5"] = talib.SMA(close, timeperiod=5)
-    stock_data["ma20"] = talib.SMA(close, timeperiod=20)
-    stock_data["ma60"] = talib.SMA(close, timeperiod=60)
-    stock_data["ma250"] = talib.SMA(close, timeperiod=250)
+    stock_data["ma10"] = np.round(talib.SMA(close, timeperiod=10), 2)
+    stock_data["ma5"] = np.round(talib.SMA(close, timeperiod=5), 2)
+    stock_data["ma20"] = np.round(talib.SMA(close, timeperiod=20), 2)
+    stock_data["ma60"] = np.round(talib.SMA(close, timeperiod=60), 2)
+    stock_data["ma250"] = np.round(talib.SMA(close, timeperiod=250), 2)
 
     # 平均交易量
     stock_data["volume_ma5"] = talib.SMA(volume, timeperiod=5)
