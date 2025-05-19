@@ -1,0 +1,10 @@
+akshare==1.16.92
+moviepy==2.1.2
+numpy==2.2.6
+openai==1.79.0
+pandas==2.2.3
+Requests==2.32.3
+scikit_learn==1.6.1
+selenium==4.32.0
+ta_lib==0.6.3
+tensorflow==2.19.0
