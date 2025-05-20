@@ -6,6 +6,7 @@ import concurrent.futures
 import csv
 
 import stock_indicators
+from stock import stock_watchlist
 from stock_holding import stock_holding
 from trade_log import trade_log
 
@@ -16,6 +17,15 @@ def build_trade_log(stock_code, price, operation, operate_date, profit, days_hel
         return trade_log(stock_code, price, "BUY", operate_date, 0, 0, macd_signal_days, 0)
     else:
         return trade_log(stock_code, price, "SELL", operate_date, profit, days_held, macd_signal_days, balance)
+
+
+def buy_watchlist_strategy(stock_watchlist, today):
+
+    for stock_watch in stock_watchlist:
+        if stock_watch.end_date == today and stock_watch.operate == 1:
+            return True
+
+    return False
 
 
 def trade_strategy(stock_data, capital):
@@ -35,10 +45,12 @@ def trade_strategy(stock_data, capital):
     profit_count = 0
     macd_signal_days = 0
 
+    watchlist = stock_watchlist.func_ma5_golden_cross_strategy(stock_data)
+
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-02-26':
+        if formatted_date == '2024-08-01':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -120,6 +132,9 @@ def trade_strategy(stock_data, capital):
                         and ma20_strategy and ma60_strategy and volume_last3days)
         '''
         buy_strategy = position == 0 and macd_strategy and dmi_strategy and ma510_strategy and bbands_buy_strategy
+
+
+        # buy_strategy = buy_watchlist_strategy(watchlist, formatted_date)
 
         if ((buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak
                 or rsi_strategy):
@@ -211,7 +226,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250515')
+        data = stock_indicators.get_stock_data(stock_code, '20210101', '20240901')
 
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -222,20 +237,20 @@ def process_stock(stock_code, base_capital):
     except Exception as e:
         print(f"\n{stock_code} 处理失败: {e}")
 
-        return stock_holding(stock_code, round(base_capital, 2), 0, 0, '20240101', round(0, 2)), 0
+        return stock_holding(stock_code, round(base_capital, 2), 0, 0, '19000101', round(0, 2)), 0
 
 
 if __name__ == "__main__":
-    '''
+
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-    
-    stock_profits = get_stock_code()
-    
-    stock_key = '603317'
+    '''
+    stock_profits = stock_indicators.get_stock_code()
+    '''
+    stock_key = '002261'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
@@ -271,7 +286,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-    '''
+
     # get_news_em(stock_key)
 
     # get_lhb_info('20250514')
@@ -289,5 +304,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    sell_price = stock_indicators.sell_price_strategy(11.73, 10.85, 0.47)
-    print(sell_price)
+    # sell_price = stock_indicators.sell_price_strategy(11.73, 10.85, 0.47)
+    # print(sell_price)

@@ -74,7 +74,7 @@ def func_ma5_golden_cross_strategy(stock_data):
         # debug
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-09-03':
+        if formatted_date == '2024-09-26':
             print("debug")
 
         stock_code = stock_data["股票代码"].iloc[0]
@@ -83,19 +83,21 @@ def func_ma5_golden_cross_strategy(stock_data):
         ma5 = stock_data["ma5"].iloc[i]
         ma10 = stock_data["ma10"].iloc[i]
         ma60 = stock_data["ma60"].iloc[i]
+        ma250 = stock_data["ma250"].iloc[i]
 
         # ma5均线金叉策略
         ma510_strategy = bool(ma5 > ma10 and stock_data["ma5"].iloc[i - 1] <= stock_data["ma10"].iloc[i - 1])
         ma560_strategy = bool(ma5 > ma60 and stock_data["ma5"].iloc[i - 1] <= stock_data["ma60"].iloc[i - 1])
+        ma5250_strategy = bool(ma5 > ma250 and stock_data["ma5"].iloc[i - 1] <= stock_data["ma250"].iloc[i - 1])
 
         if ma510_strategy:
             add_date = stock_data.index[i]
             watchlist.append(stock_watching(stock_code, add_date.date(), 1, close))
 
         if len(watchlist) > 0:
-            if ma5 < ma10 or ma560_strategy:
+            if ma5 < ma10 or ma560_strategy or ma5250_strategy:
                 trade_log = watchlist[len(watchlist) - 1]
-                trade_log.end_date = stock_data.index[i]
+                trade_log.end_date = formatted_date
 
                 if ma5 < ma10:
                     trade_log.reason = 'ma5小于ma10'
@@ -105,6 +107,11 @@ def func_ma5_golden_cross_strategy(stock_data):
                         trade_log.reason = 'ma5与ma60发生金叉，但收盘价格小于加入价格'
                     else:
                         trade_log.reason = 'ma5与ma60发生金叉'
+                        trade_log.operate = 1
+
+                if ma5 > ma60 and ma5250_strategy:
+                    trade_log.reason = 'ma5与ma250发生金叉'
+                    trade_log.operate = 1
 
                 trade_logs.append(watchlist[len(watchlist) - 1])
                 watchlist.clear()
@@ -135,7 +142,7 @@ def get_watchlist(stock_data):
 
 def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20240101', '20250516')
+        data = stock_indicators.get_stock_data(stock_code, '20230601', '20250516')
 
         stock_indicators.calculate_indicators(data)
         watchlist_stock = get_watchlist(data)
@@ -157,7 +164,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002261'
+    stock_key = '002785'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
