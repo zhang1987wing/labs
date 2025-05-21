@@ -102,8 +102,21 @@ def get_board_concept_name_df():
 # 获取某只股票的财务指标
 def get_financial_abstract(stock_code):
     df_finance = ak.stock_financial_abstract(symbol=stock_code)
-    return df_finance
 
+    roe = df_finance[(df_finance['指标'] == '净资产收益率(ROE)') & (df_finance['选项'] == '常用指标')]
+
+    latest_date = roe.columns[2]
+    prev_date = str(int(latest_date[:4]) - 1) + latest_date[4:]
+
+    # 检查是否存在上一年数据
+    if prev_date in roe.columns:
+        yoy_roe = ((roe[latest_date] - roe[prev_date]) / abs(roe[prev_date]) * 100).round(2)
+    else:
+        yoy_roe = None  # 无法计算同比
+
+    b = yoy_roe.iloc[0]
+
+    return b
 
 # 获取东方财富网资讯
 def get_news_em(stock_code):
@@ -218,3 +231,9 @@ def get_lhb_info(start_date=None):
     for _, row in latest_lhb_df_main_unique.iterrows():
         print(f"- {row['代码']} | {row['名称']} | {row['收盘价']} | {row['涨跌幅']} | {row['市场总成交额']} "
               f"| {row['龙虎榜成交额']} | {row['换手率']} | {row['流通市值']}\n")
+
+if __name__ == "__main__":
+    # print(get_financial_abstract('002229'))
+
+    df = ak.stock_zh_a_tick_tx_js('sz002229')
+    print(df)

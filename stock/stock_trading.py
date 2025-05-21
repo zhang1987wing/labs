@@ -44,13 +44,14 @@ def trade_strategy(stock_data, capital):
     trade_count = 0
     profit_count = 0
     macd_signal_days = 0
+    macd_golden_cross = False
 
-    watchlist = stock_watchlist.func_ma5_golden_cross_strategy(stock_data)
+    # watchlist = stock_watchlist.func_ma5_golden_cross_strategy(stock_data)
 
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-08-01':
+        if formatted_date == '2021-04-20':
             print("debug")
 
         open = stock_data["开盘"].iloc[i]
@@ -78,13 +79,16 @@ def trade_strategy(stock_data, capital):
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
         rsi = stock_data['rsi'].iloc[i]
 
-        if dif > dea:
+        macd_golden_cross = (stock_data["macd_dif"].iloc[i - 1]< stock_data["macd_dea"].iloc[i - 1]) & (dif > dea)
+
+        if macd_golden_cross:
             macd_signal_days = macd_signal_days + 1
-        else:
+
+        if dif < dea:
             macd_signal_days = 0
 
         dmi_strategy = dmi_plus > dmi_minus
-        macd_strategy = 0 < macd and macd_signal_days > 0 and dif > -2 and dea > -2 and dif < 0.3 and dea < 0.3
+        macd_strategy = 0 < macd and (0 < macd_signal_days < 3) and macd > stock_data["macd"].iloc[i - 1] #and abs(dif) < 0.1
         # macd_strategy = True
         # dmi_strategy = True
         bbands_strategy = True
@@ -226,7 +230,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20210101', '20240901')
+        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250521')
 
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -250,7 +254,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002261'
+    stock_key = '002352'
     stock_profits = {
         stock_key: 0,
         # '002261': 0

@@ -19,7 +19,9 @@ class stock_watching:
 
 
 if __name__ == '__main__':
-    stock_watching = stock_watching('002960', "2023-01-01", 3, 3.11)
-    stock_watching.end_date = '2025-05-15'
-    stock_watching.reason = '12312312'
+    watchlist = []
+    watchlist.append(stock_watching('002960', "2023-01-01", 3, 3.11))
+
+    stock_watching = watchlist[len(watchlist) - 1]
+    stock_watching.reason = '321231'
     print(stock_watching)
