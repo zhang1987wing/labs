@@ -169,7 +169,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002352'
+    stock_key = '002261'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
