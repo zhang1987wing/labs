@@ -3,6 +3,20 @@ import pandas as pd
 import talib
 import numpy as np
 
+from stock.model.stock_finance import stock_finance
+
+
+def add_stock_code_prefix(stock_code):
+    if stock_code.startswith('00'):
+        stock_code = f'sz{stock_code}'
+    elif stock_code.startswith('30'):
+        stock_code = f'sz{stock_code}'
+    elif stock_code.startswith('60'):
+        stock_code = f'sh{stock_code}'
+    else:
+        stock_code = f'sh{stock_code}'
+
+    return stock_code
 
 # 获取股票代码
 def get_stock_code():
@@ -101,22 +115,44 @@ def get_board_concept_name_df():
 
 # 获取某只股票的财务指标
 def get_financial_abstract(stock_code):
+
+    stock_fin = stock_finance()
+
     df_finance = ak.stock_financial_abstract(symbol=stock_code)
 
-    roe = df_finance[(df_finance['指标'] == '净资产收益率(ROE)') & (df_finance['选项'] == '常用指标')]
+    roe, yoy_roe = get_fin_indicator(df_finance, '净资产收益率(ROE)')
+    total_revenue, yoy_total_revenue = get_fin_indicator(df_finance, '营业总收入')
+    net_profit, yoy_net_profit = get_fin_indicator(df_finance, '净利润')
+    basic_earning_per_share, yoy_basic_earning_per_share = get_fin_indicator(df_finance, '基本每股收益')
 
-    latest_date = roe.columns[2]
+    stock_fin.roe = roe
+    stock_fin.yoy_roe = yoy_roe
+    stock_fin.total_revenue = total_revenue
+    stock_fin.yoy_total_revenue = yoy_total_revenue
+    stock_fin.net_profit = net_profit
+    stock_fin.yoy_net_profit = yoy_net_profit
+    stock_fin.basic_earning_per_share = basic_earning_per_share
+    stock_fin.yoy_basic_earning_per_share = yoy_basic_earning_per_share
+
+    stock_fin.report_date = df_finance.columns[2]
+
+    return stock_fin
+
+
+def get_fin_indicator(df_finance, indicators_name):
+    df_indicator = df_finance[(df_finance['指标'] == indicators_name) & (df_finance['选项'] == '常用指标')]
+
+    latest_date = df_indicator.columns[2]
     prev_date = str(int(latest_date[:4]) - 1) + latest_date[4:]
 
     # 检查是否存在上一年数据
-    if prev_date in roe.columns:
-        yoy_roe = ((roe[latest_date] - roe[prev_date]) / abs(roe[prev_date]) * 100).round(2)
+    if prev_date in df_indicator.columns:
+        yoy_finance = ((df_indicator[latest_date] - df_indicator[prev_date]) / abs(df_indicator[prev_date]) * 100).round(2)
     else:
-        yoy_roe = None  # 无法计算同比
+        yoy_finance = None  # 无法计算同比
 
-    b = yoy_roe.iloc[0]
+    return df_indicator[latest_date].iloc[0], yoy_finance.iloc[0]
 
-    return b
 
 # 获取东方财富网资讯
 def get_news_em(stock_code):
@@ -232,8 +268,41 @@ def get_lhb_info(start_date=None):
         print(f"- {row['代码']} | {row['名称']} | {row['收盘价']} | {row['涨跌幅']} | {row['市场总成交额']} "
               f"| {row['龙虎榜成交额']} | {row['换手率']} | {row['流通市值']}\n")
 
-if __name__ == "__main__":
-    # print(get_financial_abstract('002229'))
 
-    df = ak.stock_zh_a_tick_tx_js('sz002229')
-    print(df)
+def get_order_book(stock_code):
+    symbol = add_stock_code_prefix(stock_code)
+
+    order_book_df = ak.stock_zh_a_tick_tx_js(symbol)
+
+    # 初始化买盘和卖盘列
+    order_book_df['买盘'] = 0.0
+    order_book_df['卖盘'] = 0.0
+
+    # 分配成交量
+    order_book_df.loc[order_book_df['性质'] == '买盘', '买盘'] = order_book_df['成交量']
+    order_book_df.loc[order_book_df['性质'] == '卖盘', '卖盘'] = order_book_df['成交量']
+    order_book_df.loc[order_book_df['性质'] == '中性盘', ['买盘', '卖盘']] = order_book_df['成交量'] / 2
+
+    # 分组聚合
+    grouped = order_book_df.groupby('成交价格')[['买盘', '卖盘']].sum().reset_index()
+
+    # 计算总买盘和总卖盘
+    total_buy = grouped['买盘'].sum()
+    total_sell = grouped['卖盘'].sum()
+
+    # 添加买卖差值列
+    grouped['买卖差'] = grouped['买盘'] - grouped['卖盘']
+
+    # 按买卖差值倒序排序
+    grouped_sorted = grouped.sort_values(by='买卖差', ascending=False)
+
+    # 输出结果
+    print("按成交价格分组后的数据（按买卖差值倒序）:")
+    print(grouped_sorted)
+
+    print(f"\n总买盘: {total_buy}")
+    print(f"总卖盘: {total_sell}")
+
+if __name__ == "__main__":
+    print(get_financial_abstract('002229'))
+    # get_order_book('002229')

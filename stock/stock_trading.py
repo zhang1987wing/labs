@@ -1,14 +1,12 @@
 import os
 from datetime import datetime
 
-import pandas as pd
 import concurrent.futures
 import csv
 
 import stock_indicators
-from stock import stock_watchlist
-from stock_holding import stock_holding
-from trade_log import trade_log
+from stock.model.stock_holding import stock_holding
+from stock.model.trade_log import trade_log
 
 
 # 交易日志
@@ -245,15 +243,15 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-
+    '''
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
-
+    
     buy_map = {}
-    '''
+    
     stock_profits = stock_indicators.get_stock_code()
-    '''
+    
     stock_key = '002352'
     stock_profits = {
         stock_key: 0,
@@ -290,7 +288,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-
+    '''
     # get_news_em(stock_key)
 
     # get_lhb_info('20250514')
@@ -308,5 +306,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    # sell_price = stock_indicators.sell_price_strategy(11.73, 10.85, 0.47)
-    # print(sell_price)
+    sell_price = stock_indicators.sell_price_strategy(16.68, 14.95, 1.07)
+    print(sell_price)

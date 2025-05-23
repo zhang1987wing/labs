@@ -19,8 +19,7 @@ class stock_watching:
 
 
 if __name__ == '__main__':
-    watchlist = []
-    watchlist.append(stock_watching('002960', "2023-01-01", 3, 3.11))
+    watchlist = [stock_watching('002960', "2023-01-01", 3, 3.11)]
 
     stock_watching = watchlist[len(watchlist) - 1]
     stock_watching.reason = '321231'

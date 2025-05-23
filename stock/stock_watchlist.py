@@ -5,7 +5,7 @@ import concurrent.futures
 import csv
 
 import stock_indicators
-from stock_watching import stock_watching
+from stock.model.stock_watching import stock_watching
 
 
 # 预期买入股价
