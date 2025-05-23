@@ -111,9 +111,11 @@ def func_ma5_golden_cross_strategy(stock_data):
                         else:
                             stock.reason = 'ma5与ma60发生金叉'
                             stock.operate = 1
+                            stock.buy_price = close
                     else:
                         stock.reason = 'ma5与ma250发生金叉'
                         stock.operate = 1
+                        stock.buy_price = close
 
                     trade_logs.append(stock)
                     watchlist.clear()
