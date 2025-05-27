@@ -268,7 +268,7 @@ def get_lhb_info(start_date=None):
         print(f"- {row['代码']} | {row['名称']} | {row['收盘价']} | {row['涨跌幅']} | {row['市场总成交额']} "
               f"| {row['龙虎榜成交额']} | {row['换手率']} | {row['流通市值']}\n")
 
-
+# 内外盘口
 def get_order_book(stock_code):
     symbol = add_stock_code_prefix(stock_code)
 
@@ -303,6 +303,14 @@ def get_order_book(stock_code):
     print(f"\n总买盘: {total_buy}")
     print(f"总卖盘: {total_sell}")
 
+
+# 个股每日现金流
+def get_individual_fund_flow(stock_code):
+    # 获取资金流数据
+    fund_flow_df = ak.stock_individual_fund_flow(stock=stock_code)
+    # 查看前几行数据
+    print(fund_flow_df.head())
+
 if __name__ == "__main__":
-    print(get_financial_abstract('002229'))
+    print(get_individual_fund_flow('002229'))
     # get_order_book('002229')

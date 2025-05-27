@@ -1,4 +1,6 @@
 import os
+import random
+import time
 from datetime import datetime
 
 import concurrent.futures
@@ -228,7 +230,8 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 
 def process_stock(stock_code, base_capital):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250521')
+        time.sleep(random.uniform(0.2, 1.0))
+        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250527')
 
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -243,21 +246,21 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-    '''
+
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
     
     buy_map = {}
-    
+
     stock_profits = stock_indicators.get_stock_code()
-    
+    '''
     stock_key = '002352'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
     }
-
+    '''
     base_capital = 10000
 
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
@@ -266,7 +269,7 @@ if __name__ == "__main__":
         if not file_exists:
             writer.writerow(['stock_code', 'result'])  # 写入表头
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(process_stock, code, base_capital): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
@@ -288,7 +291,7 @@ if __name__ == "__main__":
 
     print(f'\n今天可以购买的股票总量为：{len(buy_map)}')
     print(buy_map)
-    '''
+
     # get_news_em(stock_key)
 
     # get_lhb_info('20250514')
@@ -306,5 +309,5 @@ if __name__ == "__main__":
     # print(data)
 
     # get_board_concept_name_df()
-    sell_price = stock_indicators.sell_price_strategy(59.15, 57, 2.34)
-    print(sell_price)
+    # sell_price = stock_indicators.sell_price_strategy(27.07, 26.12, 0.81)
+    # print(sell_price)

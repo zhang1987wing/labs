@@ -30,7 +30,7 @@ def func_oversell_strategy(stock_data):
         # debug
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2024-02-02':
+        if formatted_date == '2023-12-04':
             print("debug")
 
         stock_code = stock_data["股票代码"].iloc[0]
@@ -40,7 +40,7 @@ def func_oversell_strategy(stock_data):
         rsi = stock_data['rsi'].iloc[i]
 
         # 超卖策略
-        ma250_oversell_strategy = (ma250 - close) / ma250 > 0.3
+        ma250_oversell_strategy = (ma250 - close) / ma250 > 0.15
         bbands_oversell_strategy = close < BBANDS_lower
         rsi_oversell_strategy = rsi < 25
 
@@ -147,16 +147,17 @@ def get_watchlist(stock_data):
 
 def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250521')
+        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250527')
 
         stock_indicators.calculate_indicators(data)
         watchlist_stock = get_watchlist(data)
 
-        return watchlist_stock
+        return watchlist_stock, stock_code
     except Exception as e:
         print(f"\n{stock_code} 处理失败: {e}")
+        list = []
 
-        return stock_watching(stock_code, '1900-01-01', 0, 0)
+        return list.append(stock_watching(stock_code, '1900-01-01', 0, 0)), stock_code
 
 
 if __name__ == "__main__":
@@ -169,7 +170,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002261'
+    stock_key = '600036'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
@@ -187,12 +188,12 @@ if __name__ == "__main__":
             futures = {executor.submit(process_stock, code): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
-                watching_stock = future.result()
+                watching_stock, stock_code = future.result()
 
-                if str(watching_stock.watching_date) == today_str:
-                    watching_map[watching_stock.stock_code] = watching_stock
+                #if str(watching_stock.watching_date) == today_str:
+                #    watching_map[watching_stock.stock_code] = watching_stock
 
-                writer.writerow([watching_stock.stock_code, watching_stock])  # 写入一行记录
+                writer.writerow([stock_code, watching_stock])  # 写入一行记录
 
     print(f'\n处于观察的股票总量为：{len(watching_map)}')
     print(watching_map)

@@ -1,4 +1,4 @@
-akshare==1.16.92
+akshare==1.16.95
 moviepy==2.1.2
 numpy==2.2.6
 openai==1.79.0
