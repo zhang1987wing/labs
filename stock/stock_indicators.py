@@ -80,8 +80,10 @@ def calculate_indicators(stock_data):
     stock_data["macd"] = (stock_data["macd_dif"] - stock_data["macd_dea"]) * 2
 
     # DMI指标
-    stock_data["dmi_plus"] = talib.PLUS_DI(high, low, close, timeperiod=14)
-    stock_data["dmi_minus"] = talib.MINUS_DI(high, low, close, timeperiod=14)
+    # stock_data["dmi_plus"] = talib.PLUS_DI(high, low, close, timeperiod=14)
+    # stock_data["dmi_minus"] = talib.MINUS_DI(high, low, close, timeperiod=14)
+
+    stock_data["dmi_plus"], stock_data["dmi_minus"], stock_data["adx"] = compute_dmi(high, low, close, 14)
 
     # atr指标
     stock_data["atr"] = talib.ATR(high, low, close, timeperiod=14)
@@ -304,6 +306,37 @@ def get_order_book(stock_code):
     print(f"总卖盘: {total_sell}")
 
 
+def compute_dmi(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 14):
+    high = pd.Series(high)
+    low = pd.Series(low)
+    close = pd.Series(close)
+
+    prev_close = close.shift(1)
+
+    tr = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low - prev_close).abs()
+    ], axis=1).max(axis=1)
+
+    plus_dm = np.where((high - high.shift(1)) > (low.shift(1) - low),
+                       np.maximum(high - high.shift(1), 0), 0)
+
+    minus_dm = np.where((low.shift(1) - low) > (high - high.shift(1)),
+                        np.maximum(low.shift(1) - low, 0), 0)
+
+    tr_sum = pd.Series(tr).rolling(window=n).sum()
+    plus_dm_sum = pd.Series(plus_dm).rolling(window=n).sum()
+    minus_dm_sum = pd.Series(minus_dm).rolling(window=n).sum()
+
+    plus_di = 100 * plus_dm_sum / tr_sum
+    minus_di = 100 * minus_dm_sum / tr_sum
+    dx = 100 * (abs(plus_di - minus_di) / (plus_di + minus_di))
+    adx = dx.rolling(window=n).mean()
+
+    return plus_di.values, minus_di.values, adx.values
+
+
 # 个股每日现金流
 def get_individual_fund_flow(stock_code):
     # 获取资金流数据
@@ -312,5 +345,9 @@ def get_individual_fund_flow(stock_code):
     print(fund_flow_df.head())
 
 if __name__ == "__main__":
-    print(get_individual_fund_flow('002229'))
+    data = get_stock_data('002229', '20210101', '20250527')
+
+    calculate_indicators(data)
+
+    # print(calculate_indicators('002229'))
     # get_order_book('002229')

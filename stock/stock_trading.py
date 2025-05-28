@@ -50,10 +50,10 @@ def trade_strategy(stock_data, capital):
 
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
-
-        if formatted_date == '2021-04-20':
+        '''
+        if formatted_date == '2022-05-24':
             print("debug")
-
+        '''
         open = stock_data["开盘"].iloc[i]
         close = stock_data["收盘"].iloc[i]
         prev_close = stock_data["收盘"].iloc[i - 1]
@@ -78,17 +78,17 @@ def trade_strategy(stock_data, capital):
         atr = stock_data['atr'].iloc[i]
         volume_ma5 = stock_data["volume_ma5"].iloc[i]
         rsi = stock_data['rsi'].iloc[i]
-
+        '''
         macd_golden_cross = (stock_data["macd_dif"].iloc[i - 1]< stock_data["macd_dea"].iloc[i - 1]) & (dif > dea)
 
         if macd_golden_cross:
             macd_signal_days = macd_signal_days + 1
-
+        
         if dif < dea:
             macd_signal_days = 0
-
+        '''
         dmi_strategy = dmi_plus > dmi_minus
-        macd_strategy = 0 < macd and (0 < macd_signal_days < 3) and macd > stock_data["macd"].iloc[i - 1] #and abs(dif) < 0.1
+        macd_strategy = 0 < macd  and macd > stock_data["macd"].iloc[i - 1] #and abs(dif) < 0.1
         # macd_strategy = True
         # dmi_strategy = True
         bbands_strategy = True
@@ -112,7 +112,6 @@ def trade_strategy(stock_data, capital):
                                 and (stock_data["成交量"].iloc[i - 1] > stock_data["成交量"].iloc[i - 2]))
         volume_last3days = True
         bbands_buy_strategy = bool(BBANDS_middle > stock_data["BBANDS_middle"].iloc[i - 1] or close > BBANDS_middle)
-        bbands_sell_strategy = close < BBANDS_middle
         over_sold_strategy = bool(rsi < 25 and close < BBANDS_lower)
         rsi_strategy = bool(rsi >= 83)
 
@@ -160,11 +159,13 @@ def trade_strategy(stock_data, capital):
         else:
             days_held = i - buy_date_idx
             profit_ratio = (close - buy_price) / buy_price
-            profit_strategy = profit_ratio < -0.08
+            # profit_strategy = profit_ratio < -0.08
+            profit_strategy = False
             # days_held_strategy = days_held > 5
             atr_strategy = close < atr_sell_price
             # days_increase_strategy = (days_increase <= -5) or (days_increase >= 7.5)
             force_sell_strategy = stock_indicators.force_sell_day(formatted_date)
+            bbands_sell_strategy = close < BBANDS_middle
 
             '''
             sell_strategy = (profit_strategy or days_held_strategy or atr_strategy or days_increase_strategy
@@ -200,7 +201,7 @@ def trade_strategy(stock_data, capital):
     if capital < 0:
         capital = 0
 
-    # 打印交易记录   
+    # 打印交易记录
     for trade_log in trade_logs:
         print(trade_log)
 
@@ -231,7 +232,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 def process_stock(stock_code, base_capital):
     try:
         time.sleep(random.uniform(0.2, 1.0))
-        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250527')
+        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250528')
 
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -250,12 +251,12 @@ if __name__ == "__main__":
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
-    
+
     buy_map = {}
 
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002352'
+    stock_key = '002962'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
