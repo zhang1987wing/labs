@@ -30,7 +30,7 @@ def get_stock_code():
 
 
 # 获取股票数据
-def get_stock_data(stock_code, start_date, end_date):
+def get_daily_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
@@ -340,14 +340,25 @@ def compute_dmi(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 14):
 # 个股每日现金流
 def get_individual_fund_flow(stock_code):
     # 获取资金流数据
-    fund_flow_df = ak.stock_individual_fund_flow(stock=stock_code)
+    fund_flow_df = ak.stock_fund_flow_individual("即时")
+
+    fund_flow_df["股票代码"] = fund_flow_df["股票代码"].astype(str).str.zfill(6)
+
     # 查看前几行数据
     print(fund_flow_df.head())
 
-if __name__ == "__main__":
-    data = get_stock_data('002229', '20210101', '20250527')
 
-    calculate_indicators(data)
+# 筹码分布
+def get_stock_chip(stock_code):
+    chip_df = ak.stock_cyq_em(stock_code, 'qfq')
+    print(chip_df)
+
+if __name__ == "__main__":
+    # data = get_daily_stock_data('002229', '20210101', '20250527')
+
+    # calculate_indicators(data)
+    # get_individual_fund_flow('002229')
+    get_stock_chip('002891')
 
     # print(calculate_indicators('002229'))
     # get_order_book('002229')
