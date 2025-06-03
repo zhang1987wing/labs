@@ -338,7 +338,7 @@ def compute_dmi(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 14):
 
 
 # 个股每日现金流
-def get_individual_fund_flow(stock_code):
+def get_individual_fund_flow():
     # 获取资金流数据
     fund_flow_df = ak.stock_fund_flow_individual("即时")
 
@@ -347,6 +347,13 @@ def get_individual_fund_flow(stock_code):
     # 查看前几行数据
     print(fund_flow_df.head())
 
+
+def get_stock_individual_info(stock_code):
+    # 获取资金流数据
+    individual_info_df = ak.stock_individual_info_em(symbol=stock_code)
+
+    # 查看前几行数据
+    print(individual_info_df.head())
 
 # 筹码分布
 def get_stock_chip(stock_code):
@@ -357,8 +364,9 @@ if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250527')
 
     # calculate_indicators(data)
-    # get_individual_fund_flow('002229')
-    get_stock_chip('002891')
+    # get_individual_fund_flow()
+    get_stock_individual_info('002229')
+    # get_stock_chip('002891')
 
     # print(calculate_indicators('002229'))
     # get_order_book('002229')

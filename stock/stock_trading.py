@@ -232,7 +232,7 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-
+    '''
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
@@ -240,13 +240,13 @@ if __name__ == "__main__":
     buy_map = {}
 
     stock_profits = stock_indicators.get_stock_code()
-    '''
+    
     stock_key = '002891'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
     }
-    '''
+    
     base_capital = 10000
 
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
@@ -255,7 +255,7 @@ if __name__ == "__main__":
         if not file_exists:
             writer.writerow(['stock_code', 'result'])  # 写入表头
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(process_stock, code, base_capital): code for code in stock_profits.keys()}
 
             for future in concurrent.futures.as_completed(futures):
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     # 筹码分布
     # data = ak.stock_cyq_em('000796', adjust="qfq")
     # print(data)
-
+    '''
     # get_board_concept_name_df()
-    # sell_price = stock_indicators.sell_price_strategy(12.73, 11.98, 0.47)
-    # print(sell_price)
+    sell_price = stock_indicators.sell_price_strategy(15, 14.58, 0.44)
+    print(sell_price)
