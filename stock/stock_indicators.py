@@ -347,13 +347,12 @@ def get_individual_fund_flow():
     # 查看前几行数据
     print(fund_flow_df.head())
 
-
+# 个股基本信息
 def get_stock_individual_info(stock_code):
-    # 获取资金流数据
     individual_info_df = ak.stock_individual_info_em(symbol=stock_code)
 
     # 查看前几行数据
-    print(individual_info_df.head())
+    print(individual_info_df.loc[individual_info_df['item'] == '股票代码', 'value'].values[0])
 
 # 筹码分布
 def get_stock_chip(stock_code):
@@ -365,7 +364,7 @@ if __name__ == "__main__":
 
     # calculate_indicators(data)
     # get_individual_fund_flow()
-    get_stock_individual_info('002229')
+    get_stock_individual_info('603302')
     # get_stock_chip('002891')
 
     # print(calculate_indicators('002229'))

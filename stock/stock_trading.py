@@ -295,5 +295,5 @@ if __name__ == "__main__":
     # print(data)
     '''
     # get_board_concept_name_df()
-    sell_price = stock_indicators.sell_price_strategy(15, 14.58, 0.44)
+    sell_price = stock_indicators.sell_price_strategy(5.99, 5.95, 0.24)
     print(sell_price)
