@@ -94,7 +94,7 @@ def calculate_indicators(stock_data):
 
 # 获取板块行情数据
 def get_board_concept_name_df():
-    stock_board_concept_name_df = ak.stock_board_concept_name_em()
+    stock_board_concept_name_df = ak.stock_board_industry_name_em()
 
     # 查看数据结构
     print(stock_board_concept_name_df.head())
@@ -345,26 +345,48 @@ def get_individual_fund_flow():
     fund_flow_df["股票代码"] = fund_flow_df["股票代码"].astype(str).str.zfill(6)
 
     # 查看前几行数据
-    print(fund_flow_df.head())
+    # print(fund_flow_df.head())
+    return fund_flow_df
 
 # 个股基本信息
 def get_stock_individual_info(stock_code):
     individual_info_df = ak.stock_individual_info_em(symbol=stock_code)
 
     # 查看前几行数据
-    print(individual_info_df.loc[individual_info_df['item'] == '股票代码', 'value'].values[0])
+    # print(individual_info_df.loc[individual_info_df['item'] == '股票代码', 'value'].values[0])
+    return individual_info_df
+
+
+# 概念资金流
+def get_stock_fund_flow_concept():
+    concept_fund_flow_df = ak.stock_fund_flow_concept(symbol='即时')
+
+    # 查看前几行数据
+    # print(individual_info_df.loc[individual_info_df['item'] == '股票代码', 'value'].values[0])
+    return concept_fund_flow_df
+
+
+# 行业资金流
+def get_stock_fund_flow_industry():
+    industry_fund_flow_df = ak.stock_fund_flow_industry(symbol='即时')
+
+    return industry_fund_flow_df
+
 
 # 筹码分布
 def get_stock_chip(stock_code):
     chip_df = ak.stock_cyq_em(stock_code, 'qfq')
     print(chip_df)
 
+    return chip_df
+
+
 if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250527')
 
     # calculate_indicators(data)
     # get_individual_fund_flow()
-    get_stock_individual_info('603302')
+    get_stock_fund_flow_industry()
     # get_stock_chip('002891')
 
     # print(calculate_indicators('002229'))
