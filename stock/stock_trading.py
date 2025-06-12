@@ -172,7 +172,7 @@ def trade_strategy(stock_data, capital):
                 macd_signal_days = 0
 
                 trade_logs.append(build_trade_log(stock_code, f"{sell_price:.2f}", "SELL", stock_data.index[i].date(),
-                                                  f"{profit_ratio * 100:.2f}%", days_held, 0, f"{capital:.2f}"))
+                                                  f"{profit_ratio * 100:.2f}", days_held, 0, f"{capital:.2f}"))
 
                 trade_count = trade_count + 1
 
@@ -232,15 +232,15 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-    '''
+
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-
+    '''
     stock_profits = stock_indicators.get_stock_code()
-    
+    '''
     stock_key = '002891'
     stock_profits = {
         stock_key: 0,
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     # 筹码分布
     # data = ak.stock_cyq_em('000796', adjust="qfq")
     # print(data)
-    '''
+
     # get_board_concept_name_df()
-    sell_price = stock_indicators.sell_price_strategy(5.99, 5.95, 0.24)
-    print(sell_price)
+    # sell_price = stock_indicators.sell_price_strategy(16.46, 15.63, 0.52)
+    # print(sell_price)

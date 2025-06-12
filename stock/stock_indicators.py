@@ -381,6 +381,11 @@ def get_stock_chip(stock_code):
     return chip_df
 
 
+# 盈利预测
+def get_stock_profit_forecast_ths(stock_code):
+    stock_profit_forecast_ths_df = ak.stock_profit_forecast_ths(symbol=stock_code,indicator="预测年报每股收益")
+    print(stock_profit_forecast_ths_df)
+
 if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250527')
 
@@ -388,6 +393,4 @@ if __name__ == "__main__":
     # get_individual_fund_flow()
     get_stock_fund_flow_industry()
     # get_stock_chip('002891')
-
-    # print(calculate_indicators('002229'))
     # get_order_book('002229')
