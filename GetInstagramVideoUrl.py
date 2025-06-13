@@ -46,7 +46,7 @@ def get_video_url(username):
         # 翻页次数
         page = 1
 
-        while page < 21:
+        while page < 51:
             print(f'获取第{page}页的链接')
             # 获取页面中所有的视频链接
             elements = driver.find_elements(By.TAG_NAME, "a")
