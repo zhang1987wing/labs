@@ -12,12 +12,7 @@ def householdAppliance_alert(plat_ssn):
         url = f"https://mkts.chinaums.com/jdhsApi/jdhs/user/category/coupon/get/unionpay_online/householdAppliance"
         payload = {
             "platSsn": f'{plat_ssn}',
-            "userInfo": '68486B9EBA2ADC21DD59C4F6A303102C691C2256A4558CA0E0D162D38D14BC93BF7CD93BF9A8A48961CEC603C1628A7F1B'
-                        'D3F3C7860F6772CDD098003AAF1C9970EC29E20FE5D345D0B2289E8D6196C8CAF367AC7AFC79B5DF29E9B4B10589EC45B1'
-                        '993235897DD6FE155311F1C62625EB423F069015D5FFAFFB889C66151401A2CC261F4001343238B029AC5AFC2A397D6F76'
-                        'D6B27B5895BB582BEFBD37CE30E19F36640F6FD17989F2FA21875B333D1834CBDD687F4BEF83DC0E950FE7323C9C050968'
-                        'E8FFBD1F2A45E047DD3966DB5D098867B9E4FB1B1BE86820E86540460D92C7328613C2D45451E9198386C87E0AA46E6620'
-                        'E1EC93BA343BC762217A63',
+            "userInfo": '568099BE25B7A8A713CAABD20EB204059F8073E66BD415F9376492E93F7B9AC09F454A7B6417A27E035E0901658A1B23F234292EE054C3DB24721172F538CC91E62F8B3A587F65D5163DE8CF3A4890C34115D39AB6CE75C206DE430BC972030338FF121F2F102EB83F46AA44C16E8DE40B07BBB3FF721A2F34122462BD4812EA9832A846848F784EBF1B649C7810F097BB4C99C9680B11AB9501B89716DB6420DFFB5594A9C9AA96B1753B7CF877CF4F89544B4995FBDC5F76347DC7306732FA59CB8936B78CEF45265435A3FE0CD7927CF0724431FE0877CC4460876B31B86192C17A265E7BB6AC30FE9682C39E6A6BC20F63481AEC5E5A870F5B65961553B3',
             "category": "COMPUTER"
         }
         headers = {"User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -26,7 +21,7 @@ def householdAppliance_alert(plat_ssn):
                    "Referer": 'https://mkts.chinaums.com/hbjdhs-h5/index.html'
                    }
 
-        response = requests.post(url, headers=headers, json=payload, verify=False)
+        response = requests.post(url, headers=headers, json=payload, verify=False, timeout=10)
 
         parse_data = response.json()
         return parse_data["respCode"]
@@ -70,7 +65,7 @@ def main():
 
 
 if __name__ == "__main__":
-    schedule.every().day.at("22:30").do(main)
+    schedule.every().day.at("09:58").do(main)
 
     print("等待执行指定时间任务...")
     while True:

@@ -39,4 +39,4 @@ def queryCouponUrl(userId):
 
 
 if __name__ == "__main__":
-    print(queryCouponUrl('r44iUPJpas'))
+    print(queryCouponUrl('EPmR71CMsF'))
