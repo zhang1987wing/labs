@@ -1,35 +1,34 @@
-SELECT * FROM stock.stockquote
-#WHERE stock_code = 0000001
-WHERE cur_date = '2025-02-26';
+SELECT * FROM stock.stock_quote
+WHERE stock_code = 600000;
+#WHERE stock_name NOT LIKE '%ST%'
+#WHERE cur_date = '20250529';
 
-DELETE FROM stock.stockquote
-WHERE cur_date < '2025-02-01';
-
-UPDATE stock.stockquote
+UPDATE stock.stock_quote
 SET cur_date = '2024-04-30'
 WHERE cur_date = '2024-05-01';
 
-DELETE FROM stock.stockquote
-WHERE cur_date = '2025-02-26';
+SELECT * FROM stock.open_position_stock
+#WHERE stock_code = '603918'
+WHERE buy_date = 20250620# AND profit > 9
+ORDER BY profit DESC;
 
-SELECT * FROM ma5_more_than_ma10
-#WHERE stock_code = '000026'
-WHERE end_date IS NULL
-AND macd_analyze = 1 AND dmi_analyze = 1
-AND last_day = 1
-ORDER BY last_day DESC;
+SELECT * FROM stock.stock_fund_flow
+#WHERE stock_code = 002258;
+WHERE fund_date = 20250620# and stock_code = 301229;
+ORDER BY stock_code;
 
-SELECT last_day, COUNT(stock_code), begin_date, '2025-02-14 00:00:00'
-            FROM ma5_more_than_ma10
-            WHERE end_date IS NULL
-            GROUP BY last_day
-            ORDER BY last_day;
+SELECT * FROM stock.stock_basic_info
+WHERE stock_code = '002181'
+#WHERE industry LIKE '%风电设备%'
+ORDER BY market_cap DESC;
 
-SELECT * FROM stockcode_lastday_daily
-ORDER BY lastday, cur_date ASC;
+SELECT * FROM stock.concept_fund_flow_daily
+WHERE net_fund > 0;
 
-DELETE FROM stockcode_lastday_daily
-WHERE cur_date = '2025-02-17 00:00:00';
+SELECT * FROM stock.industry_fund_flow_daily
+#WHERE create_date = '20250612'
+#WHERE industry LIKE '%文化传媒%';
+ORDER BY create_date DESC;
 
 SELECT * FROM world.city;
 
