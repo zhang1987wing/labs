@@ -297,3 +297,4 @@ if __name__ == "__main__":
     # get_board_concept_name_df()
     # sell_price = stock_indicators.sell_price_strategy(16.46, 15.63, 0.52)
     # print(sell_price)
+    #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
