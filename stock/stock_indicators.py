@@ -386,11 +386,26 @@ def get_stock_profit_forecast_ths(stock_code):
     stock_profit_forecast_ths_df = ak.stock_profit_forecast_ths(symbol=stock_code,indicator="预测年报每股收益")
     print(stock_profit_forecast_ths_df)
 
+
+def get_30min_stock_data(stock_code, start_date, end_date):
+    print('获取股票数据-begin')
+    stock_data = ak.stock_zh_a_hist_min_em(symbol=stock_code, period="30", start_date=start_date, end_date=end_date,
+                                    adjust="qfq")
+    print('股票数据-end')
+    stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
+                          '涨跌额', '换手率']
+
+    # 将日期转换为索引
+    stock_data['日期'] = pd.to_datetime(stock_data['日期'])
+    stock_data.set_index('日期', inplace=True)
+
+    return stock_data
+
 if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250527')
-
+    data = get_30min_stock_data('002229', '20250630', '20250630')
     # calculate_indicators(data)
     # get_individual_fund_flow()
-    get_stock_fund_flow_industry()
+    # get_stock_fund_flow_industry()
     # get_stock_chip('002891')
     # get_order_book('002229')
