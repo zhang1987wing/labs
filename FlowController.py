@@ -7,7 +7,7 @@ import GetInstagramVideoUrl
 import HandleCsv
 import HandleVideo
 
-username = 'sogoodshoot'
+username = 'instagram'
 filename = f'{username}_video_links.csv'
 collected_links = set()
 
@@ -17,14 +17,20 @@ if not os.path.exists(filename):
     HandleCsv.save_links_to_csv(collected_links, filename)
 
 updated_rows = HandleCsv.get_updated_rows_from_csv(filename)
-count = 1
 
+folder_path = f"D:\\视频\\ins视频\\{username}"
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)  # 创建文件夹
+
+count = len([f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))])
+count = 1 if count == 0 else count
 
 try:
     for row in updated_rows:
         link = row[0]
 
         if row[1] == 'True' or row[1] == 'is_used':
+            count = count + 1
             continue
 
         print("\n收集到的Instagram分享链接:")
@@ -36,10 +42,6 @@ try:
 
         if len(mp4_links) != 0:
             row[1] = 'True'
-
-        folder_path = f"D:\\网赚\\ins视频\\{username}"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)  # 创建文件夹
 
         # 打印所有的下载链接
         for mp4_link in mp4_links:
