@@ -392,12 +392,14 @@ def get_30min_stock_data(stock_code, start_date, end_date):
     stock_data = ak.stock_zh_a_hist_min_em(symbol=stock_code, period="30", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
     print('股票数据-end')
-    stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
+    stock_data.columns = ['时间', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
 
+    stock_data['股票代码'] = stock_code
+
     # 将日期转换为索引
-    stock_data['日期'] = pd.to_datetime(stock_data['日期'])
-    stock_data.set_index('日期', inplace=True)
+    stock_data['时间'] = pd.to_datetime(stock_data['时间'])
+    stock_data.set_index('时间', inplace=True)
 
     return stock_data
 

@@ -124,6 +124,14 @@ def trade_strategy(stock_data, capital):
 
         # buy_strategy = buy_watchlist_strategy(watchlist, formatted_date)
 
+        # 日K维度
+        # 股价越高，短期内rsi高点越低出现背驰，不买入
+        # 从高点下来，向下趋势，买入点未到前一上升趋势的最低点，后期的反弹未形成更高的低点，则不参与买入
+        # 从高点下来，向下趋势，买入点未到前一上升趋势的最低点，后期的盘整未形成更高的低点，则不参与买入
+        # 从高点下来，向下趋势，买入点未到前一上升趋势的最低点，年线向下，不买入
+        # 从高点下来，向下趋势，买入点已经是最低点，观察点，0线下的macd交叉点离0线越近，才能买入
+        # 从低点上去，向上趋势，如果买入点为第一买点的高点，其后的回撤，macd依旧在0线以上，观察30分钟的走势
+        # 从低点上去，盘整趋势，买入点需要在最低点附近
         if ((buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak
                 or rsi_strategy):
             buy_strategy = False
@@ -217,8 +225,8 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 def process_stock(stock_code, base_capital):
     try:
         time.sleep(random.uniform(1, 3.0))
-        data = stock_indicators.get_daily_stock_data(stock_code, '20210101', '20250529')
-
+        data = stock_indicators.get_daily_stock_data(stock_code, '20210101', '20250707')
+        # data = stock_indicators.get_30min_stock_data(stock_code, '20210101', '20250704')
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
 
@@ -232,21 +240,21 @@ def process_stock(stock_code, base_capital):
 
 
 if __name__ == "__main__":
-    '''
+
     today_str = datetime.today().strftime('%Y-%m-%d 00:00:00')
     output_file = "buy_results.csv"
     file_exists = os.path.exists(output_file)
 
     buy_map = {}
-    
+    '''
     stock_profits = stock_indicators.get_stock_code()
-    
-    stock_key = '002891'
+    '''
+    stock_key = '002094'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
     }
-    
+
     base_capital = 10000
 
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
@@ -293,7 +301,7 @@ if __name__ == "__main__":
     # 筹码分布
     # data = ak.stock_cyq_em('000796', adjust="qfq")
     # print(data)
-    '''
+
     # get_board_concept_name_df()
-    sell_price = stock_indicators.sell_price_strategy(13.47, 12.6, 0.42)
-    print(sell_price)
+    # sell_price = stock_indicators.sell_price_strategy(13.47, 12.6, 0.42)
+    # print(sell_price)
