@@ -130,6 +130,7 @@ def trade_strategy(stock_data, capital):
         # 从高点下来，向下趋势，买入点未到前一上升趋势的最低点，后期的盘整未形成更高的低点，则不参与买入
         # 从高点下来，向下趋势，买入点未到前一上升趋势的最低点，年线向下，不买入
         # 从高点下来，向下趋势，买入点已经是最低点，观察点，0线下的macd交叉点离0线越近，才能买入
+        # 从高点下来，向下趋势，周线未有金叉，不买入
         # 从低点上去，向上趋势，如果买入点为第一买点的高点，其后的回撤，macd依旧在0线以上，观察30分钟的走势
         # 从低点上去，盘整趋势，买入点需要在最低点附近
         if ((buy_strategy and heavy_volume_sell_off_strategy and long_upper_shadow_strategy) or losing_streak
@@ -225,7 +226,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 def process_stock(stock_code, base_capital):
     try:
         time.sleep(random.uniform(1, 3.0))
-        data = stock_indicators.get_daily_stock_data(stock_code, '20210101', '20250707')
+        data = stock_indicators.get_daily_stock_data(stock_code, '20210101', '20250709')
         # data = stock_indicators.get_30min_stock_data(stock_code, '20210101', '20250704')
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -249,7 +250,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002094'
+    stock_key = '002602'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
