@@ -1,3 +1,5 @@
+import datetime
+
 import akshare as ak
 import pandas as pd
 import talib
@@ -419,12 +421,38 @@ def get_30min_stock_data(stock_code, start_date, end_date):
 
     return stock_data
 
+
+def get_monday_weeks_ago(date_str, weeks):
+    # 将字符串转换为日期对象
+    date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+
+    # 获取x周前的日期
+    delta_days = weeks * 7
+    date_34_weeks_ago = date - datetime.timedelta(days=delta_days)
+
+    # 计算当周的周一（weekday: 周一是0）
+    weekday = date_34_weeks_ago.weekday()
+    monday = date_34_weeks_ago - datetime.timedelta(days=weekday)
+
+    return date.strftime("%Y%m%d"), monday.strftime("%Y%m%d")
+
+
+def get_day_weekly_macd(stock_code, date_input):
+    current_date, monday = get_monday_weeks_ago(date_input, 104)
+
+    data = get_weekly_stock_data(stock_code, monday, current_date)
+    calculate_indicators(data)
+
+    last_row = data.iloc[-1]
+
+    return last_row['macd'] > 0
+
 if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250709')
     # data = get_30min_stock_data('002229', '20250630', '20250709')
-    data = get_weekly_stock_data('002602', '20210630', '20250709')
-    calculate_indicators(data)
-    print(data)
+    date_input = "2021-08-19"
+    print(get_day_weekly_macd('002602', date_input) == False)
+
     # get_individual_fund_flow()
     # get_stock_fund_flow_industry()
     # get_stock_chip('002891')
