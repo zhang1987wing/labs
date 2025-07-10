@@ -50,7 +50,7 @@ def trade_strategy(stock_data, capital):
     for i in range(1, len(stock_data)):
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
-        if formatted_date == '2021-08-19':
+        if formatted_date == '2025-02-06':
             print("debug")
 
         open_price = stock_data["开盘"].iloc[i]
@@ -140,6 +140,7 @@ def trade_strategy(stock_data, capital):
         if position == 0:
             # 买入条件
             if buy_strategy:
+
                 weekly_macd = stock_indicators.get_day_weekly_macd(stock_code, formatted_date)
                 if not weekly_macd:
                     buy_strategy = False
@@ -255,7 +256,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002602'
+    stock_key = '002261'
     stock_profits = {
         stock_key: 0,
         # '002261': 0

@@ -440,18 +440,53 @@ def get_monday_weeks_ago(date_str, weeks):
 def get_day_weekly_macd(stock_code, date_input):
     current_date, monday = get_monday_weeks_ago(date_input, 104)
 
-    data = get_weekly_stock_data(stock_code, monday, current_date)
-    calculate_indicators(data)
+    # data = get_weekly_stock_data(stock_code, monday, current_date)
+    daily_df = get_daily_stock_data(stock_code, monday, current_date)
 
-    last_row = data.iloc[-1]
+    # daily_df['日期'] = pd.to_datetime(daily_df['日期'])
+    # df = daily_df.set_index('日期')
+
+    # 重新采样为周K（W-FRI 表示以周五为一周的结束）
+    df_weekly = daily_df.resample('W-FRI').agg({
+        '开盘': 'first',
+        '最高': 'max',
+        '最低': 'min',
+        '收盘': 'last',
+        '成交量': 'sum'
+    }).dropna()
+
+    # 检查最后一条原始数据日期
+    last_day = daily_df.index[-1]
+    last_week_friday = df_weekly.index[-1]
+    last_last_week_friday = df_weekly.index[-2]
+
+    if last_week_friday > last_day:
+        # 补充最后一周数据（不够一整周也要算）
+        df_last_week = daily_df[daily_df.index > last_last_week_friday]
+        if not df_last_week.empty:
+            new_row = {
+                '开盘': df_last_week['开盘'].iloc[0],
+                '最高': df_last_week['最高'].max(),
+                '最低': df_last_week['最低'].min(),
+                '收盘': df_last_week['收盘'].iloc[-1],
+                '成交量': df_last_week['成交量'].sum()
+            }
+            # 添加到 df_weekly，使用最后日期作为索引
+            df_weekly = df_weekly.iloc[:-1]
+            df_weekly.loc[last_day] = new_row
+
+    # 按时间排序
+    df_weekly = df_weekly.sort_index()
+    calculate_indicators(df_weekly)
+    last_row = df_weekly.iloc[-1]
 
     return last_row['macd'] > 0
 
 if __name__ == "__main__":
     # data = get_daily_stock_data('002229', '20210101', '20250709')
     # data = get_30min_stock_data('002229', '20250630', '20250709')
-    date_input = "2021-08-19"
-    print(get_day_weekly_macd('002602', date_input) == False)
+    date_input = "2025-07-10"
+    print(get_day_weekly_macd('002602', date_input))
 
     # get_individual_fund_flow()
     # get_stock_fund_flow_industry()
