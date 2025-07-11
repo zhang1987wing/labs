@@ -405,9 +405,9 @@ def get_stock_profit_forecast_ths(stock_code):
     print(stock_profit_forecast_ths_df)
 
 
-def get_30min_stock_data(stock_code, start_date, end_date):
+def get_min_stock_data(stock_code, start_date, end_date, minute):
     print('获取股票数据-begin')
-    stock_data = ak.stock_zh_a_hist_min_em(symbol=stock_code, period="30", start_date=start_date, end_date=end_date,
+    stock_data = ak.stock_zh_a_hist_min_em(symbol=stock_code, period=minute, start_date=start_date, end_date=end_date,
                                     adjust="qfq")
     print('股票数据-end')
     stock_data.columns = ['时间', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
@@ -437,14 +437,10 @@ def get_monday_weeks_ago(date_str, weeks):
     return date.strftime("%Y%m%d"), monday.strftime("%Y%m%d")
 
 
-def get_day_weekly_macd(stock_code, date_input):
-    current_date, monday = get_monday_weeks_ago(date_input, 104)
+def get_day_weekly_macd(daily_df):
+    # current_date, monday = get_monday_weeks_ago(date_input, 104)
 
-    # data = get_weekly_stock_data(stock_code, monday, current_date)
-    daily_df = get_daily_stock_data(stock_code, monday, current_date)
-
-    # daily_df['日期'] = pd.to_datetime(daily_df['日期'])
-    # df = daily_df.set_index('日期')
+    # daily_df = get_daily_stock_data(stock_code, monday, current_date)
 
     # 重新采样为周K（W-FRI 表示以周五为一周的结束）
     df_weekly = daily_df.resample('W-FRI').agg({
@@ -480,13 +476,15 @@ def get_day_weekly_macd(stock_code, date_input):
     calculate_indicators(df_weekly)
     last_row = df_weekly.iloc[-1]
 
-    return last_row['macd'] > 0
+    return last_row['macd'] > 0, last_row['ma60'], last_row['ma250'] > df_weekly.iloc[-2]['ma250']
 
 if __name__ == "__main__":
-    # data = get_daily_stock_data('002229', '20210101', '20250709')
-    # data = get_30min_stock_data('002229', '20250630', '20250709')
-    date_input = "2025-07-10"
-    print(get_day_weekly_macd('002602', date_input))
+    data = get_daily_stock_data('002229', '20120101', '20250711')
+    # data = get_min_stock_data('002229', '20240630', '20250709', 60)
+    # date_input = "2025-07-10"
+    # print(get_day_weekly_macd('002602', date_input))
+    daily_df = data[data.index < '2021-07-02']
+    get_day_weekly_macd(daily_df)
 
     # get_individual_fund_flow()
     # get_stock_fund_flow_industry()

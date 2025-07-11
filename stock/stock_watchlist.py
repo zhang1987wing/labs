@@ -74,6 +74,9 @@ def func_ma5_golden_cross_strategy(stock_data):
         # debug
         formatted_date = stock_data.index[i].date().strftime('%Y-%m-%d')
 
+        if formatted_date < '2021-01-01':
+            continue
+
         if formatted_date == '2025-04-28':
             print("debug")
 
@@ -147,7 +150,7 @@ def get_watchlist(stock_data):
 
 def process_stock(stock_code):
     try:
-        data = stock_indicators.get_stock_data(stock_code, '20210101', '20250527')
+        data = stock_indicators.get_daily_stock_data(stock_code, '20190101', '20250527')
 
         stock_indicators.calculate_indicators(data)
         watchlist_stock = get_watchlist(data)
