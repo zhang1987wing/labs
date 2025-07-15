@@ -438,10 +438,6 @@ def get_monday_weeks_ago(date_str, weeks):
 
 
 def get_day_weekly_macd(daily_df):
-    # current_date, monday = get_monday_weeks_ago(date_input, 104)
-
-    # daily_df = get_daily_stock_data(stock_code, monday, current_date)
-
     # 重新采样为周K（W-FRI 表示以周五为一周的结束）
     df_weekly = daily_df.resample('W-FRI').agg({
         '开盘': 'first',
@@ -476,7 +472,7 @@ def get_day_weekly_macd(daily_df):
     calculate_indicators(df_weekly)
     last_row = df_weekly.iloc[-1]
 
-    return last_row['macd'] > 0, last_row['ma60'], last_row['ma250'] > df_weekly.iloc[-2]['ma250']
+    return last_row['macd'] > df_weekly.iloc[-2]['macd'], last_row['ma60'], last_row['ma250'] > df_weekly.iloc[-2]['ma250']
 
 if __name__ == "__main__":
     data = get_daily_stock_data('002229', '20120101', '20250711')

@@ -53,7 +53,7 @@ def trade_strategy(stock_data, capital):
         if formatted_date < '2021-01-01':
             continue
 
-        if formatted_date == '2018-11-16':
+        if formatted_date == '2023-01-30':
             print("debug")
 
         open_price = stock_data["开盘"].iloc[i]
@@ -82,8 +82,8 @@ def trade_strategy(stock_data, capital):
         rsi = stock_data['rsi'].iloc[i]
 
         # 获取周线数据
-        weekly_macd, weekly_ma60, weekly_ma250 = stock_indicators.get_day_weekly_macd(
-            stock_data[stock_data.index < stock_data.index[i]])
+        #weekly_macd, weekly_ma60, weekly_ma250 = stock_indicators.get_day_weekly_macd(
+        #    stock_data[stock_data.index < stock_data.index[i]])
         #weekly_strategy = weekly_macd and close_price > weekly_ma60 and weekly_ma250
         weekly_strategy = True
 
@@ -228,7 +228,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 def process_stock(stock_code, base_capital):
     try:
         time.sleep(random.uniform(1, 3.0))
-        data = stock_indicators.get_daily_stock_data(stock_code, '20120101', '20250711')
+        data = stock_indicators.get_daily_stock_data(stock_code, '20120101', '20250715')
         # data = stock_indicators.get_min_stock_data(stock_code, '20210101', '20250704', 60)
         stock_indicators.calculate_indicators(data)
         buy_stock = trade_strategy(data, base_capital)
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002229'
+    stock_key = '603486'
     stock_profits = {
         stock_key: 0,
         # '002261': 0
