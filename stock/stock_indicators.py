@@ -490,10 +490,12 @@ def update_stock_code():
 
     print("导出成功，文件名：创业板股票列表.csv")
 
+# 营业收入和主营业务现金流
+
 if __name__ == "__main__":
-    update_stock_code()
+    # update_stock_code()
     # data = get_daily_stock_data('002229', '20120101', '20250711')
-    # data = get_min_stock_data('002229', '20240630', '20250709', 60)
+    data = get_min_stock_data('002229', '20120101', '20250718', 30)
     # date_input = "2025-07-10"
     # print(get_day_weekly_macd('002602', date_input))
     # daily_df = data[data.index < '2021-07-02']
