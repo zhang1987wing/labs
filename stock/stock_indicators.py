@@ -474,13 +474,30 @@ def get_day_weekly_macd(daily_df):
 
     return last_row['macd'] > df_weekly.iloc[-2]['macd'], last_row['ma60'], last_row['ma250'] > df_weekly.iloc[-2]['ma250']
 
+
+def update_stock_code():
+    df_sz = ak.stock_info_sz_name_code()
+
+    # 筛选创业板（创业板股票代码以 300 开头）
+    df_cyb = df_sz[df_sz['A股代码'].str.startswith('300')]
+
+    # 选择并重命名字段
+    df_cyb_export = df_cyb[['A股简称', 'A股代码']].copy()
+    df_cyb_export.columns = ['股票名称', '股票代码']
+
+    # 导出为CSV
+    df_cyb_export.to_csv("创业板股票列表.csv", index=False, encoding='utf-8')
+
+    print("导出成功，文件名：创业板股票列表.csv")
+
 if __name__ == "__main__":
-    data = get_daily_stock_data('002229', '20120101', '20250711')
+    update_stock_code()
+    # data = get_daily_stock_data('002229', '20120101', '20250711')
     # data = get_min_stock_data('002229', '20240630', '20250709', 60)
     # date_input = "2025-07-10"
     # print(get_day_weekly_macd('002602', date_input))
-    daily_df = data[data.index < '2021-07-02']
-    get_day_weekly_macd(daily_df)
+    # daily_df = data[data.index < '2021-07-02']
+    # get_day_weekly_macd(daily_df)
 
     # get_individual_fund_flow()
     # get_stock_fund_flow_industry()
