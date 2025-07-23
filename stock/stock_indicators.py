@@ -472,7 +472,10 @@ def get_day_weekly_macd(daily_df):
     calculate_indicators(df_weekly)
     last_row = df_weekly.iloc[-1]
 
-    return last_row['macd'] > df_weekly.iloc[-2]['macd'], last_row['ma60'], last_row['ma250'] > df_weekly.iloc[-2]['ma250']
+    weekly_macd_strategy = last_row['macd'] > df_weekly.iloc[-2]['macd']
+
+    return (weekly_macd_strategy and last_row['ma250'] > df_weekly.iloc[-2]['ma250'],
+            last_row['ma60'])
 
 
 def update_stock_code():
