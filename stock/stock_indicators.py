@@ -494,6 +494,8 @@ def update_stock_code():
     print("导出成功，文件名：创业板股票列表.csv")
 
 # 营业收入和主营业务现金流
+def get_stock_cash_flow():
+     df_cash_flow = ak.stock_cash_flow_sheet_by_report_em()
 
 # 自由现金流估值
 def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5):
