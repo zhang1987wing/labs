@@ -495,6 +495,24 @@ def update_stock_code():
 
 # 营业收入和主营业务现金流
 
+# 自由现金流估值
+def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5):
+    fcf_list = []
+    for i in range(1, years + 1):
+        fcf = fcf_now * ((1 + growth_rate) ** i)
+        fcf_list.append(fcf)
+
+    # 折现每一年的FCF
+    discounted_fcf = [fcf / ((1 + discount_rate) ** i) for i, fcf in enumerate(fcf_list, start=1)]
+
+    # 计算终值（Gordon增长模型）并折现
+    terminal_value = fcf_list[-1] * (1 + terminal_growth) / (discount_rate - terminal_growth)
+    terminal_value_discounted = terminal_value / ((1 + discount_rate) ** years)
+
+    dcf_total = sum(discounted_fcf) + terminal_value_discounted
+    return dcf_total
+
+
 if __name__ == "__main__":
     # update_stock_code()
     data = get_daily_stock_data('002229', '20120101', '20250711')
