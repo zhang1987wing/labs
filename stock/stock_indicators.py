@@ -497,6 +497,8 @@ def update_stock_code():
 def get_stock_cash_flow():
      df_cash_flow = ak.stock_cash_flow_sheet_by_report_em()
 
+     return df_cash_flow
+
 # 自由现金流估值
 def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5):
     fcf_list = []
@@ -517,12 +519,14 @@ def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5)
 
 if __name__ == "__main__":
     # update_stock_code()
+    '''
     data = get_daily_stock_data('002229', '20120101', '20250711')
     calculate_indicators(data)
 
     for stock_data in data:
         formatted_date = stock_data.index(0).date().strftime('%Y-%m-%d')
         print(formatted_date)
+    '''
     # data = get_min_stock_data('002229', '20120101', '20250718', 30)
     # date_input = "2025-07-10"
     # print(get_day_weekly_macd('002602', date_input))
@@ -533,3 +537,4 @@ if __name__ == "__main__":
     # get_stock_fund_flow_industry()
     # get_stock_chip('002891')
     # get_order_book('002229')
+    get_stock_cash_flow()
