@@ -499,6 +499,13 @@ def get_stock_cash_flow():
 
      return df_cash_flow
 
+
+# 获取期货数据
+def get_futures_hist_em():
+     df_futures = ak.get_futures_daily("20250101", "20260101", "CFFEX")
+
+     return df_futures
+
 # 自由现金流估值
 def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5):
     fcf_list = []
@@ -537,4 +544,5 @@ if __name__ == "__main__":
     # get_stock_fund_flow_industry()
     # get_stock_chip('002891')
     # get_order_book('002229')
-    get_stock_cash_flow()
+    #get_stock_cash_flow()
+    get_futures_hist_em()
