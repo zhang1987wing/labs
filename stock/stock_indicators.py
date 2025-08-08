@@ -222,8 +222,11 @@ def sell_price_strategy(high, low, atr):
 
 
 # 是否涨停
-def cal_limit_up(prev_price, current_price):
-    return round(prev_price * 1.10, 2) == current_price
+def cal_limit_up(prev_price, current_price, stock_code):
+    if stock_code.startswith('00') or stock_code.startswith('60'):
+        return round(prev_price * 1.10, 2) == current_price
+    else:
+        return round(prev_price * 1.20, 2) == current_price
 
 
 # 放量大跌，抛盘压力

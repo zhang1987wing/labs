@@ -107,6 +107,7 @@ def get_sell_strategy(indicators_map, formatted_date):
     high_price = indicators_map.get("high_price")
     low_price = indicators_map.get("low_price")
     days_increase = indicators_map.get("days_increase")
+    stock_code = indicators_map.get("stock_code")
 
     profit_strategy = False
     atr_strategy = close_price < atr_sell_price
@@ -117,7 +118,7 @@ def get_sell_strategy(indicators_map, formatted_date):
                                                                             high_price,
                                                                             low_price, days_increase)
 
-    is_limit_up = stock_indicators.cal_limit_up(prev_close_price, close_price)
+    is_limit_up = stock_indicators.cal_limit_up(prev_close_price, close_price, stock_code)
 
     sell_strategy = (atr_strategy or bbands_sell_strategy or profit_strategy or heavy_volume_sell_off_strategy
                      or force_sell_strategy)
@@ -159,6 +160,7 @@ def trade(stock_data, capital, min_buying_point):
         if formatted_date == '2023-01-30':
             print("debug")
 
+        indicators_map["stock_code"] = stock_code
         indicators_map["open_price"] = stock_data["开盘"].iloc[i]
         indicators_map["close_price"] = stock_data["收盘"].iloc[i]
         indicators_map["prev_close_price"] = stock_data["收盘"].iloc[i - 1]
