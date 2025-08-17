@@ -526,6 +526,8 @@ def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5)
     dcf_total = sum(discounted_fcf) + terminal_value_discounted
     return dcf_total
 
+#夏普比率
+#未实现盈利值
 
 if __name__ == "__main__":
     # update_stock_code()
