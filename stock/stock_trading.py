@@ -387,7 +387,7 @@ def cal_profit_to_loss_ratio(stocks_profits, initial_funds):
 def process_stock(stock_code, base_capital):
     try:
         time.sleep(random.uniform(1, 3.0))
-        data = stock_indicators.get_daily_stock_data(stock_code, '20120101', '20250725')
+        data = stock_indicators.get_daily_stock_data(stock_code, '20120101', '20250909')
 
         # min_buying_point = get_30min_buying_point(stock_code)
         min_buying_point = []
@@ -413,7 +413,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '300533'
+    stock_key = '002748'
     stock_profits = {
         stock_key: 0,
         # '002261': 0

@@ -36,6 +36,7 @@ def get_daily_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
+
     print('股票数据-end')
     stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
@@ -526,8 +527,53 @@ def dcf_valuation(fcf_now, growth_rate, discount_rate, terminal_growth, years=5)
     dcf_total = sum(discounted_fcf) + terminal_value_discounted
     return dcf_total
 
-#夏普比率
+
+#夏普比率:夏普比率 = (投资组合收益率 - 无风险利率) / 投资组合波动率
+def get_sharp_ratio():
+    # 假设你已经有了投资组合的每日收益率数据
+    # 这里我们创建一个示例 DataFrame
+    # 真实数据通常来自于股票、基金或加密货币的历史价格
+    dates = pd.date_range(start='2020-01-01', periods=252, freq='B')
+    portfolio_returns = pd.Series(np.random.normal(0.0005, 0.01, 252), index=dates)
+
+    # 设置无风险利率
+    # 通常使用短期国债收益率，例如1年期国债利率
+    # 这里我们假设年化无风险利率为2%
+    risk_free_rate = 0.17
+
+    # 将数据转换为DataFrame
+    df = pd.DataFrame({'returns': portfolio_returns})
+
+    # 计算每日的平均收益率
+    daily_avg_return = df['returns'].mean()
+
+    # 计算每日收益率的标准差（波动率）
+    daily_std_dev = df['returns'].std()
+
+    # ---------------------------------------------
+    # 下面开始年化数据
+    # 通常一年有252个交易日（股票），或365天（加密货币）
+    # 这里我们以252个交易日为例
+    trading_days_in_year = 252
+
+    # 年化平均收益率
+    annualized_avg_return = daily_avg_return * trading_days_in_year
+
+    # 年化波动率
+    annualized_std_dev = daily_std_dev * np.sqrt(trading_days_in_year)
+
+    # ---------------------------------------------
+    # 计算夏普比率
+    # 无风险利率也需要与数据频率匹配
+    sharpe_ratio = (annualized_avg_return - risk_free_rate) / annualized_std_dev
+
+    print(f"年化平均收益率: {annualized_avg_return:.4f}")
+    print(f"年化波动率: {annualized_std_dev:.4f}")
+    print(f"夏普比率: {sharpe_ratio:.4f}")
+
+
 #未实现盈利值
+# 行业指数与万得全A指数的比值
 
 if __name__ == "__main__":
     # update_stock_code()
@@ -549,5 +595,6 @@ if __name__ == "__main__":
     # get_stock_fund_flow_industry()
     # get_stock_chip('002891')
     # get_order_book('002229')
-    #get_stock_cash_flow()
-    get_futures_hist_em()
+    #g et_stock_cash_flow()
+    # get_futures_hist_em()
+    get_sharp_ratio()
