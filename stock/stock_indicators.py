@@ -48,6 +48,22 @@ def get_daily_stock_data(stock_code, start_date, end_date):
     return stock_data
 
 
+# 获取股票指数数据
+def get_daily_index_data(sh_index_code, start_date, end_date):
+    print('获取股票数据-begin')
+    stock_data = ak.index_zh_a_hist(sh_index_code, 'daily', start_date, end_date)
+
+    print('股票数据-end')
+    stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
+                          '涨跌额', '换手率']
+
+    # 将日期转换为索引
+    stock_data['日期'] = pd.to_datetime(stock_data['日期'])
+    stock_data.set_index('日期', inplace=True)
+
+    return stock_data
+
+
 # 获取周线股票数据
 def get_weekly_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
@@ -575,26 +591,126 @@ def get_sharp_ratio():
 #未实现盈利值
 # 行业指数与万得全A指数的比值
 
+# 获取A股恐慌指数（基于波动率计算）
+def get_a_share_panic_index(date_str):
+    """
+    获取指定日期的A股恐慌指数
+    基于上证指数的波动率计算，类似VIX指数的概念
+    :param date_str: 日期字符串，格式：YYYY-MM-DD
+    :return: 当日恐慌指数（0-100，数值越高表示恐慌程度越高）
+    """
+    try:
+        # 将输入日期转换为所需格式
+        target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        end_date = target_date.strftime('%Y%m%d')
+        # 获取前30个交易日数据用于计算波动率
+        start_date = (target_date - datetime.timedelta(days=45)).strftime('%Y%m%d')
+        
+        print(f"正在获取 {date_str} 的A股恐慌指数...")
+        
+        # 获取上证指数数据
+        stock_data = get_daily_index_data('sh000001', start_date, end_date)
+        
+        if stock_data.empty:
+            print("无法获取股票数据")
+            return None
+        
+        # 筛选到目标日期的数据
+        target_data = stock_data[stock_data.index.date <= target_date.date()]
+        
+        if len(target_data) < 20:  # 至少需要20个交易日的数据
+            print("数据不足，无法计算恐慌指数")
+            return None
+            
+        # 计算日收益率
+        target_data['daily_return'] = target_data['收盘'].pct_change()
+        
+        # 计算最近20个交易日的波动率（年化）
+        recent_data = target_data.tail(20)
+        volatility = recent_data['daily_return'].std() * np.sqrt(252)
+        
+        # 将波动率转换为恐慌指数 (0-100)
+        # 正常市场波动率约为15-25%，对应恐慌指数20-50
+        # 波动率>40%对应恐慌指数>80
+        panic_index = min(100, max(0, (volatility - 0.10) * 200))
+        
+        # 获取当日收盘价和涨跌幅
+        if target_date.date() in [d.date() for d in target_data.index]:
+            current_data = target_data[target_data.index.date == target_date.date()].iloc[-1]
+            close_price = current_data['收盘']
+            change_pct = current_data['涨跌幅']
+            
+            # 如果当日大跌，增加恐慌指数
+            if change_pct < -3:
+                panic_index += abs(change_pct) * 2
+            elif change_pct < -5:
+                panic_index += abs(change_pct) * 3
+                
+            panic_index = min(100, panic_index)
+            
+            print(f"日期: {date_str}")
+            print(f"上证指数收盘: {close_price:.2f}")
+            print(f"涨跌幅: {change_pct:.2f}%")
+            print(f"20日波动率: {volatility*100:.2f}%")
+            print(f"恐慌指数: {panic_index:.2f}")
+            
+            return round(panic_index, 2)
+        else:
+            print(f"未找到 {date_str} 的交易数据，可能是非交易日")
+            return None
+            
+    except Exception as e:
+        print(f"计算A股恐慌指数失败: {e}")
+        return None
+
+
+# 解读恐慌指数
+def interpret_panic_index(panic_index):
+    """
+    解读恐慌指数含义
+    :param panic_index: 恐慌指数分数 (0-100)
+    :return: 解读结果和投资建议
+    """
+    if panic_index is None:
+        return "无法获取数据"
+        
+    if panic_index >= 80:
+        level = "极度恐慌"
+        suggestion = "市场极度恐慌，可能是抄底良机，但需谨慎控制仓位"
+    elif panic_index >= 60:
+        level = "恐慌"
+        suggestion = "市场恐慌情绪较重，关注超跌反弹机会"
+    elif panic_index >= 40:
+        level = "偏恐慌"
+        suggestion = "市场情绪偏向恐慌，可适当关注"
+    elif panic_index >= 20:
+        level = "正常"
+        suggestion = "市场情绪相对平稳，按正常策略操作"
+    else:
+        level = "平静"
+        suggestion = "市场情绪平静，波动率较低"
+        
+    return f"{level}（{panic_index:.1f}） - {suggestion}"
+
+
 if __name__ == "__main__":
-    # update_stock_code()
-    '''
-    data = get_daily_stock_data('002229', '20120101', '20250711')
-    calculate_indicators(data)
-
-    for stock_data in data:
-        formatted_date = stock_data.index(0).date().strftime('%Y-%m-%d')
-        print(formatted_date)
-    '''
-    # data = get_min_stock_data('002229', '20120101', '20250718', 30)
-    # date_input = "2025-07-10"
-    # print(get_day_weekly_macd('002602', date_input))
-    # daily_df = data[data.index < '2021-07-02']
-    # get_day_weekly_macd(daily_df)
-
-    # get_individual_fund_flow()
-    # get_stock_fund_flow_industry()
-    # get_stock_chip('002891')
-    # get_order_book('002229')
-    #g et_stock_cash_flow()
-    # get_futures_hist_em()
-    get_sharp_ratio()
+    # 测试A股恐慌指数功能
+    print("=== A股恐慌指数测试 ===")
+    
+    # 测试多个日期的恐慌指数
+    test_dates = [
+        "2025-04-08",  # 最近的交易日
+    ]
+    
+    for date_str in test_dates:
+        print(f"\n--- 测试日期: {date_str} ---")
+        try:
+            panic_index = get_a_share_panic_index(date_str)
+            if panic_index is not None:
+                interpretation = interpret_panic_index(panic_index)
+                print(f"恐慌指数解读: {interpretation}")
+            else:
+                print("无法获取该日期的恐慌指数")
+        except Exception as e:
+            print(f"获取恐慌指数失败: {e}")
+        print("-" * 50)

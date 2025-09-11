@@ -68,7 +68,7 @@ def get_buy_strategy(indicators_map, cooldown_days):
     dmi_minus = indicators_map.get("dmi_minus")
 
     volume_ma5 = indicators_map.get("volume_ma5")
-    rsi = indicators_map.get("open_price")
+    rsi = indicators_map.get("rsi")
 
     dmi_buy_strategy = dmi_plus > dmi_minus
     macd_buy_strategy = 0 < macd and macd > prev_macd
