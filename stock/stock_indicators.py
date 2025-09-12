@@ -54,7 +54,7 @@ def get_daily_index_data(sh_index_code, start_date, end_date):
     stock_data = ak.index_zh_a_hist(sh_index_code, 'daily', start_date, end_date)
 
     print('股票数据-end')
-    stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
+    stock_data.columns = ['日期', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
 
     # 将日期转换为索引
@@ -69,6 +69,7 @@ def get_weekly_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="weekly", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
+
     print('股票数据-end')
     stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
@@ -609,7 +610,7 @@ def get_a_share_panic_index(date_str):
         print(f"正在获取 {date_str} 的A股恐慌指数...")
         
         # 获取上证指数数据
-        stock_data = get_daily_index_data('sh000001', start_date, end_date)
+        stock_data = get_daily_index_data('000001', start_date, end_date)
         
         if stock_data.empty:
             print("无法获取股票数据")
@@ -693,24 +694,23 @@ def interpret_panic_index(panic_index):
     return f"{level}（{panic_index:.1f}） - {suggestion}"
 
 
+# 300ETF 期权波动率指数
+def get_300etf_qvix_index():
+    index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
+    print(index_option_300etf_qvix_df)
+
+
+# 中证1000 期权波动率指数
+def get_1000etf_qvix_index():
+    index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
+    print(index_option_1000index_qvix_df)
+
+
+# 申万一级行业信息
+def get_sw_index_first_info():
+    sw_index_first_info_df = ak.sw_index_first_info()
+    print(sw_index_first_info_df)
+
+
 if __name__ == "__main__":
-    # 测试A股恐慌指数功能
-    print("=== A股恐慌指数测试 ===")
-    
-    # 测试多个日期的恐慌指数
-    test_dates = [
-        "2025-04-08",  # 最近的交易日
-    ]
-    
-    for date_str in test_dates:
-        print(f"\n--- 测试日期: {date_str} ---")
-        try:
-            panic_index = get_a_share_panic_index(date_str)
-            if panic_index is not None:
-                interpretation = interpret_panic_index(panic_index)
-                print(f"恐慌指数解读: {interpretation}")
-            else:
-                print("无法获取该日期的恐慌指数")
-        except Exception as e:
-            print(f"获取恐慌指数失败: {e}")
-        print("-" * 50)
+    get_sw_index_first_info()
