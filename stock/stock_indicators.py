@@ -592,125 +592,43 @@ def get_sharp_ratio():
 #未实现盈利值
 # 行业指数与万得全A指数的比值
 
-# 获取A股恐慌指数（基于波动率计算）
-def get_a_share_panic_index(date_str):
-    """
-    获取指定日期的A股恐慌指数
-    基于上证指数的波动率计算，类似VIX指数的概念
-    :param date_str: 日期字符串，格式：YYYY-MM-DD
-    :return: 当日恐慌指数（0-100，数值越高表示恐慌程度越高）
-    """
-    try:
-        # 将输入日期转换为所需格式
-        target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-        end_date = target_date.strftime('%Y%m%d')
-        # 获取前30个交易日数据用于计算波动率
-        start_date = (target_date - datetime.timedelta(days=45)).strftime('%Y%m%d')
-        
-        print(f"正在获取 {date_str} 的A股恐慌指数...")
-        
-        # 获取上证指数数据
-        stock_data = get_daily_index_data('000001', start_date, end_date)
-        
-        if stock_data.empty:
-            print("无法获取股票数据")
-            return None
-        
-        # 筛选到目标日期的数据
-        target_data = stock_data[stock_data.index.date <= target_date.date()]
-        
-        if len(target_data) < 20:  # 至少需要20个交易日的数据
-            print("数据不足，无法计算恐慌指数")
-            return None
-            
-        # 计算日收益率
-        target_data['daily_return'] = target_data['收盘'].pct_change()
-        
-        # 计算最近20个交易日的波动率（年化）
-        recent_data = target_data.tail(20)
-        volatility = recent_data['daily_return'].std() * np.sqrt(252)
-        
-        # 将波动率转换为恐慌指数 (0-100)
-        # 正常市场波动率约为15-25%，对应恐慌指数20-50
-        # 波动率>40%对应恐慌指数>80
-        panic_index = min(100, max(0, (volatility - 0.10) * 200))
-        
-        # 获取当日收盘价和涨跌幅
-        if target_date.date() in [d.date() for d in target_data.index]:
-            current_data = target_data[target_data.index.date == target_date.date()].iloc[-1]
-            close_price = current_data['收盘']
-            change_pct = current_data['涨跌幅']
-            
-            # 如果当日大跌，增加恐慌指数
-            if change_pct < -3:
-                panic_index += abs(change_pct) * 2
-            elif change_pct < -5:
-                panic_index += abs(change_pct) * 3
-                
-            panic_index = min(100, panic_index)
-            
-            print(f"日期: {date_str}")
-            print(f"上证指数收盘: {close_price:.2f}")
-            print(f"涨跌幅: {change_pct:.2f}%")
-            print(f"20日波动率: {volatility*100:.2f}%")
-            print(f"恐慌指数: {panic_index:.2f}")
-            
-            return round(panic_index, 2)
-        else:
-            print(f"未找到 {date_str} 的交易数据，可能是非交易日")
-            return None
-            
-    except Exception as e:
-        print(f"计算A股恐慌指数失败: {e}")
-        return None
 
-
-# 解读恐慌指数
-def interpret_panic_index(panic_index):
-    """
-    解读恐慌指数含义
-    :param panic_index: 恐慌指数分数 (0-100)
-    :return: 解读结果和投资建议
-    """
-    if panic_index is None:
-        return "无法获取数据"
-        
-    if panic_index >= 80:
-        level = "极度恐慌"
-        suggestion = "市场极度恐慌，可能是抄底良机，但需谨慎控制仓位"
-    elif panic_index >= 60:
-        level = "恐慌"
-        suggestion = "市场恐慌情绪较重，关注超跌反弹机会"
-    elif panic_index >= 40:
-        level = "偏恐慌"
-        suggestion = "市场情绪偏向恐慌，可适当关注"
-    elif panic_index >= 20:
-        level = "正常"
-        suggestion = "市场情绪相对平稳，按正常策略操作"
-    else:
-        level = "平静"
-        suggestion = "市场情绪平静，波动率较低"
-        
-    return f"{level}（{panic_index:.1f}） - {suggestion}"
-
-
-# 300ETF 期权波动率指数
-def get_300etf_qvix_index():
+# 获取市场波动率指数，它衡量的是指数在未来30天内的预期波动幅度，以年化的百分比形式呈现。
+# 1、关注市场大跌或大涨后的高波动率。（高波动率在30以上）
+# 2、对于a股来说，关注长期下跌后或短期上涨后的相对高波动率。（高波动率在25以上），对于创业板或科创板来说，高波动率需要提高上限
+def get_market_qvix_index():
     index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
-    print(index_option_300etf_qvix_df)
+    # print(index_option_300etf_qvix_df)
+    index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
+    print(index_300etf_qvix)
 
-
-# 中证1000 期权波动率指数
-def get_1000etf_qvix_index():
     index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
-    print(index_option_1000index_qvix_df)
+    # print(index_option_1000index_qvix_df)
+    index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
+    print(index_1000etf_qvix)
+
+    index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
+    # print(index_option_cyb_qvix_df)
+    index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
+    print(index_cyb_qvix)
+
+    index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
+    # print(index_option_kcb_qvix_df)
+    index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
+    print(index_kcb_qvix)
 
 
 # 申万一级行业信息
 def get_sw_index_first_info():
     sw_index_first_info_df = ak.sw_index_first_info()
     print(sw_index_first_info_df)
+    
+
+# 申万三级行业信息
+def get_sw_index_third_info():
+    sw_index_third_info_df = ak.sw_index_third_info()
+    print(sw_index_third_info_df)
 
 
 if __name__ == "__main__":
-    get_sw_index_first_info()
+    get_market_qvix_index()
