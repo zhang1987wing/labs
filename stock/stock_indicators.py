@@ -277,37 +277,59 @@ def force_sell_day(formatted_date):
     return formatted_date in ['2024-10-08', '2025-04-07']
 
 
-# 查询龙虎榜信息（默认查询最近一个交易日）
-def get_lhb_info(start_date=None):
-    if start_date:
-        lhb_df = ak.stock_lhb_detail_em(start_date=start_date, end_date=start_date)
-    else:
-        lhb_df = ak.stock_lhb_detail_em()
+# 获取QFII持仓，接口报错
+def get_stock_report_fund_hold(date):
+    stock_report_fund_hold_df = ak.stock_report_fund_hold(symbol="QFII持仓", date=date)
+    print(stock_report_fund_hold_df)
 
-    if lhb_df.empty:
+
+# 查询龙虎榜信息
+def get_lhb_info(start_date=None):
+    # 股票代码前缀
+    filter_board_prefixes = ("60", "000", "30")
+
+    '''
+    # 机构席位追踪
+    stock_lhb_jgstatistic_em_df = ak.stock_lhb_jgstatistic_em(symbol="近一月")
+    stock_lhb_jgstatistic_em_df = stock_lhb_jgstatistic_em_df.sort_values(by='名称', ascending=False)
+    stock_lhb_jgstatistic_em_filter_df = stock_lhb_jgstatistic_em_df[stock_lhb_jgstatistic_em_df["代码"].str.startswith(filter_board_prefixes)]
+    # print(stock_lhb_jgstatistic_em_filter_df)
+    '''
+
+    # 个股上榜统计
+    stock_lhb_stock_statistic_em_df = ak.stock_lhb_stock_statistic_em(symbol="近一月")
+    stock_lhb_stock_statistic_em_df = stock_lhb_stock_statistic_em_df.sort_values(by='最近上榜日', ascending=False)
+    stock_lhb_stock_statistic_em_filter_df = stock_lhb_stock_statistic_em_df[stock_lhb_stock_statistic_em_df["代码"].str.startswith(filter_board_prefixes)]
+
+    if start_date:
+        lhb_detail_df = ak.stock_lhb_detail_em(start_date=start_date, end_date=start_date)
+    else:
+        lhb_detail_df = ak.stock_lhb_detail_em()
+
+    if lhb_detail_df.empty:
         print("无龙虎榜数据。")
         return
 
     # 按照市场总成交额降序排序
-    lhb_df = lhb_df.sort_values(by='市场总成交额', ascending=False)
+    lhb_detail_df = lhb_detail_df.sort_values(by='市场总成交额', ascending=False)
 
-    # 主板股票代码前缀
-    main_board_prefixes = ("60", "000")
+    # 过滤出代码
+    lhb_detail_filter_df = lhb_detail_df[lhb_detail_df["代码"].str.startswith(filter_board_prefixes)]
 
-    # 过滤出主板代码，并取前 10 条
-    lhb_df_main = lhb_df[lhb_df["代码"].str.startswith(main_board_prefixes)]
+    # 合并同类项
+    lhb_detail_filter_merged_df = lhb_detail_filter_df.groupby('代码').agg(stock_name=('代码', 'first'), merged_interpretation=('解读', lambda x: ' | '.join(x))).reset_index()
+    lhb_detail_filter_merged_df = lhb_detail_filter_merged_df[['代码', 'merged_interpretation']]
 
-    # 按股票代码去重，保留第一条记录
-    lhb_df_main_unique = lhb_df_main.drop_duplicates(subset="代码", keep="first")
+    # 使用 merge 函数连接两个 DataFrame
+    # on='stock_code'：指定连接的共同列
+    # how='left'：表示保留左侧（df_main）的所有行，并添加匹配的解读内容
+    df_final = pd.merge(stock_lhb_stock_statistic_em_filter_df, lhb_detail_filter_merged_df, on='代码', how='left')
 
-    latest_lhb_df_main_unique = (
-        lhb_df_main_unique[['代码', '名称', '收盘价', '涨跌幅', '市场总成交额', '龙虎榜成交额', '换手率', '流通市值']]
-        .head(10))
+    for index, row in df_final.iterrows():
+        if row['最近上榜日'].strftime('%Y%m%d') == start_date:
+            print(row)
 
-    print(f"\n龙虎榜（市场总成交额）：\n")
-    for _, row in latest_lhb_df_main_unique.iterrows():
-        print(f"- {row['代码']} | {row['名称']} | {row['收盘价']} | {row['涨跌幅']} | {row['市场总成交额']} "
-              f"| {row['龙虎榜成交额']} | {row['换手率']} | {row['流通市值']}\n")
+    return df_final
 
 # 内外盘口
 def get_order_book(stock_code):
@@ -631,4 +653,4 @@ def get_sw_index_third_info():
 
 
 if __name__ == "__main__":
-    get_market_qvix_index()
+    get_lhb_info('20250916')
