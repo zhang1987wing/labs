@@ -68,7 +68,7 @@ def get_buy_strategy(indicators_map, cooldown_days):
     dmi_minus = indicators_map.get("dmi_minus")
 
     volume_ma5 = indicators_map.get("volume_ma5")
-    rsi = indicators_map.get("open_price")
+    rsi = indicators_map.get("rsi")
 
     dmi_buy_strategy = dmi_plus > dmi_minus
     macd_buy_strategy = 0 < macd and macd > prev_macd
@@ -413,7 +413,7 @@ if __name__ == "__main__":
     '''
     stock_profits = stock_indicators.get_stock_code()
     '''
-    stock_key = '002748'
+    stock_key = '603103'
     stock_profits = {
         stock_key: 0,
         # '002261': 0

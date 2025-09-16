@@ -48,11 +48,28 @@ def get_daily_stock_data(stock_code, start_date, end_date):
     return stock_data
 
 
+# 获取股票指数数据
+def get_daily_index_data(sh_index_code, start_date, end_date):
+    print('获取股票数据-begin')
+    stock_data = ak.index_zh_a_hist(sh_index_code, 'daily', start_date, end_date)
+
+    print('股票数据-end')
+    stock_data.columns = ['日期', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
+                          '涨跌额', '换手率']
+
+    # 将日期转换为索引
+    stock_data['日期'] = pd.to_datetime(stock_data['日期'])
+    stock_data.set_index('日期', inplace=True)
+
+    return stock_data
+
+
 # 获取周线股票数据
 def get_weekly_stock_data(stock_code, start_date, end_date):
     print('获取股票数据-begin')
     stock_data = ak.stock_zh_a_hist(symbol=stock_code, period="weekly", start_date=start_date, end_date=end_date,
                                     adjust="qfq")
+
     print('股票数据-end')
     stock_data.columns = ['日期', '股票代码', '开盘', '收盘', '最高', '最低', '成交量', '成交额', '振幅', '涨跌幅',
                           '涨跌额', '换手率']
@@ -575,26 +592,43 @@ def get_sharp_ratio():
 #未实现盈利值
 # 行业指数与万得全A指数的比值
 
+
+# 获取市场波动率指数，它衡量的是指数在未来30天内的预期波动幅度，以年化的百分比形式呈现。
+# 1、关注市场大跌或大涨后的高波动率。（高波动率在30以上）
+# 2、对于a股来说，关注长期下跌后或短期上涨后的相对高波动率。（高波动率在25以上），对于创业板或科创板来说，高波动率需要提高上限
+def get_market_qvix_index():
+    index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
+    # print(index_option_300etf_qvix_df)
+    index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
+    print(index_300etf_qvix)
+
+    index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
+    # print(index_option_1000index_qvix_df)
+    index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
+    print(index_1000etf_qvix)
+
+    index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
+    # print(index_option_cyb_qvix_df)
+    index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
+    print(index_cyb_qvix)
+
+    index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
+    # print(index_option_kcb_qvix_df)
+    index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
+    print(index_kcb_qvix)
+
+
+# 申万一级行业信息
+def get_sw_index_first_info():
+    sw_index_first_info_df = ak.sw_index_first_info()
+    print(sw_index_first_info_df)
+    
+
+# 申万三级行业信息
+def get_sw_index_third_info():
+    sw_index_third_info_df = ak.sw_index_third_info()
+    print(sw_index_third_info_df)
+
+
 if __name__ == "__main__":
-    # update_stock_code()
-    '''
-    data = get_daily_stock_data('002229', '20120101', '20250711')
-    calculate_indicators(data)
-
-    for stock_data in data:
-        formatted_date = stock_data.index(0).date().strftime('%Y-%m-%d')
-        print(formatted_date)
-    '''
-    # data = get_min_stock_data('002229', '20120101', '20250718', 30)
-    # date_input = "2025-07-10"
-    # print(get_day_weekly_macd('002602', date_input))
-    # daily_df = data[data.index < '2021-07-02']
-    # get_day_weekly_macd(daily_df)
-
-    # get_individual_fund_flow()
-    # get_stock_fund_flow_industry()
-    # get_stock_chip('002891')
-    # get_order_book('002229')
-    #g et_stock_cash_flow()
-    # get_futures_hist_em()
-    get_sharp_ratio()
+    get_market_qvix_index()
