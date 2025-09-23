@@ -669,7 +669,28 @@ def get_stock_a_congestion_lg():
     stock_a_congestion_lg_df = ak.stock_a_congestion_lg()
     print(stock_a_congestion_lg_df)
 
+
+# 获取概念板块行情
+def get_stock_board_concept_name_em():
+    stock_board_concept_name_em_df = ak.stock_board_concept_name_em()
+
+    # 提取板块名称和涨跌幅
+    board_df = stock_board_concept_name_em_df[['板块名称', '最新价', '涨跌幅']]
+
+    # 按涨跌幅排序
+    board_df['涨跌幅'] = board_df['涨跌幅'].astype(str).str.replace('%', '').astype(float)
+    board_df = board_df.sort_values(by='涨跌幅', ascending=False)
+
+    return board_df
+
+
+# 获取概念板块成分股
+def get_stock_board_concept_cons_em(symbol):
+    stock_board_concept_cons_em_df = ak.stock_board_concept_cons_em(symbol=symbol)
+    print(stock_board_concept_cons_em_df)
+
 if __name__ == "__main__":
     # get_lhb_info('20250917')
-    get_stock_a_congestion_lg()
+    # get_stock_a_congestion_lg()
     # print(get_market_qvix_index())
+    get_board_industry_name_df()
