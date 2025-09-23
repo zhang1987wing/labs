@@ -693,4 +693,6 @@ if __name__ == "__main__":
     # get_lhb_info('20250917')
     # get_stock_a_congestion_lg()
     # print(get_market_qvix_index())
-    get_board_industry_name_df()
+    # get_board_industry_name_df()
+    # get_stock_board_concept_name_em()
+    get_stock_board_concept_cons_em('光通信模块')
