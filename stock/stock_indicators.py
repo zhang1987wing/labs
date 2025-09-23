@@ -5,7 +5,7 @@ import pandas as pd
 import talib
 import numpy as np
 
-from stock.model.stock_finance import stock_finance
+from model.stock_finance import stock_finance
 
 
 def add_stock_code_prefix(stock_code):
@@ -619,25 +619,34 @@ def get_sharp_ratio():
 # 1、关注市场大跌或大涨后的高波动率。（高波动率在30以上）
 # 2、对于a股来说，关注长期下跌后或短期上涨后的相对高波动率。（高波动率在25以上），对于创业板或科创板来说，高波动率需要提高上限
 def get_market_qvix_index():
-    index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
-    # print(index_option_300etf_qvix_df)
-    index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
-    print(index_300etf_qvix)
+    """获取市场QVIX恐慌指数"""
+    try:
+        # 获取沪深300ETF期权QVIX
+        index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
+        index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
 
-    index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
-    # print(index_option_1000index_qvix_df)
-    index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
-    print(index_1000etf_qvix)
+        # 获取中证1000指数期权QVIX
+        index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
+        index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
 
-    index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
-    # print(index_option_cyb_qvix_df)
-    index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
-    print(index_cyb_qvix)
+        # 获取创业板ETF期权QVIX
+        index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
+        index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
 
-    index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
-    # print(index_option_kcb_qvix_df)
-    index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
-    print(index_kcb_qvix)
+        # 获取科创板50ETF期权QVIX
+        index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
+        index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
+
+        return {
+            'date': index_300etf_qvix['date'],
+            'qvix_300': float(index_300etf_qvix['close']),
+            'qvix_1000': float(index_1000etf_qvix['close']),
+            'qvix_cyb': float(index_cyb_qvix['close']),
+            'qvix_kcb': float(index_kcb_qvix['close'])
+        }
+    except Exception as e:
+        print(f"获取QVIX数据失败: {e}")
+        return None
 
 
 # 申万一级行业信息
@@ -653,4 +662,5 @@ def get_sw_index_third_info():
 
 
 if __name__ == "__main__":
-    get_lhb_info('20250916')
+    get_lhb_info('20250917')
+    # print(get_market_qvix_index())
