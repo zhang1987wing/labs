@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票回测系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar {
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            border-radius: 0.5rem;
+        }
+        .progress-container {
+            display: none;
+        }
+        .stock-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 15px;
+            padding: 5px 15px;
+            margin: 2px;
+            font-size: 0.9em;
+        }
+        .stock-tag .close {
+            margin-left: 8px;
+            color: #666;
+            cursor: pointer;
+        }
+        .result-card {
+            margin-bottom: 1rem;
+        }
+        .profit-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .profit-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .qvix-panel {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .qvix-item {
+            text-align: center;
+            padding: 10px;
+        }
+        .qvix-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .qvix-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* 搜索下拉框样式 */
+        #stockSuggestions {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        #stockSuggestions .list-group-item {
+            border: none;
+            border-bottom: 1px solid #f8f9fa;
+            cursor: pointer;
+        }
+
+        #stockSuggestions .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        #stockSuggestions .list-group-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 sidebar p-4">
+                <h3 class="mb-4">
+                    <i class="fas fa-chart-line"></i> 股票回测系统
+                </h3>
+                
+                <!-- QVIX恐慌指数面板 -->
+                <div class="qvix-panel">
+                    <h5 class="mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> QVIX恐慌指数
+                    </h5>
+                    <div class="row" id="qvixData">
+                        <div class="col-6 qvix-item">
+                            <div class="qvix-value" id="qvix300">--</div>
+                            <div class="qvix-label">沪深300</div>
+                        </div>
+                        <div class="col-6 qvix-item">
+                            <div class="qvix-value" id="qvix1000">--</div>
+                            <div class="qvix-label">中证1000</div>
+                        </div>
+                        <div class="col-6 qvix-item">
+                            <div class="qvix-value" id="qvixCyb">--</div>
+                            <div class="qvix-label">创业板</div>
+                        </div>
+                        <div class="col-6 qvix-item">
+                            <div class="qvix-value" id="qvixKcb">--</div>
+                            <div class="qvix-label">科创板</div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small id="qvixDate">更新时间: --</small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5><i class="fas fa-info-circle"></i> 系统说明</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 支持多股票并行回测</li>
+                        <li><i class="fas fa-check text-success"></i> 基于MACD、RSI等技术指标</li>
+                        <li><i class="fas fa-check text-success"></i> ATR止损风险控制</li>
+                        <li><i class="fas fa-check text-success"></i> 实时进度显示</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5><i class="fas fa-lightbulb"></i> 使用提示</h5>
+                    <ul class="list-unstyled small">
+                        <li>• 建议初始资金设置为1万-100万</li>
+                        <li>• 回测期间建议至少6个月</li>
+                        <li>• 同时回测股票数量建议不超过10只</li>
+                        <li>• QVIX >30表示市场恐慌</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="col-md-9 main-content p-4">
+                <h2 class="mb-4">股票回测配置</h2>
+
+                <!-- 回测参数表单 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-cog"></i> 回测参数设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="backtestForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">股票代码</label>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="stockInput" 
+                                               placeholder="输入股票代码或名称搜索" autocomplete="off">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="addStock()">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div id="stockSuggestions" class="list-group position-absolute" style="z-index: 1000; display: none;"></div>
+                                    <div id="selectedStocks" class="mb-3"></div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">初始资金 (元)</label>
+                                    <input type="number" class="form-control mb-3" id="initialCapital" 
+                                           value="10000" min="1000" step="1000">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">开始日期</label>
+                                    <input type="date" class="form-control mb-3" id="startDate" 
+                                           value="2024-01-01">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">结束日期</label>
+                                    <input type="date" class="form-control mb-3" id="endDate" 
+                                           value="2024-12-31">
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-play"></i> 开始回测
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 进度显示 -->
+                <div class="progress-container">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-spinner fa-spin"></i> 回测进行中</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="progress mb-2">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="progressBar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div id="progressText" class="text-center">准备中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 回测结果 -->
+                <div id="resultsSection" style="display: none;">
+                    <!-- 汇总统计 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 回测结果汇总</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="summaryStats">
+                                <!-- 汇总统计内容将通过JavaScript动态填充 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 收益率图表 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-line"></i> 收益率分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="profitChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 详细结果 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-table"></i> 详细回测结果</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="detailResults" class="row">
+                                <!-- 详细结果将通过JavaScript动态填充 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedStocks = [];
+        let currentTaskId = null;
+        let pollInterval = null;
+        let profitChart = null; // 存储图表实例
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQVIXData();
+            setupStockSearch();
+            setupForm();
+            
+            // 设置默认日期
+            const today = new Date();
+            const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+            
+            document.getElementById('startDate').value = oneYearAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        });
+
+        // 加载QVIX数据
+        async function loadQVIXData() {
+            try {
+                const response = await fetch('/api/qvix');
+                const data = await response.json();
+                
+                document.getElementById('qvix300').textContent = data.qvix_300.toFixed(1);
+                document.getElementById('qvix1000').textContent = data.qvix_1000.toFixed(1);
+                document.getElementById('qvixCyb').textContent = data.qvix_cyb.toFixed(1);
+                document.getElementById('qvixKcb').textContent = data.qvix_kcb.toFixed(1);
+                document.getElementById('qvixDate').textContent = `更新时间: ${data.date}`;
+            } catch (error) {
+                console.error('加载QVIX数据失败:', error);
+            }
+        }
+
+        // 设置股票搜索功能
+        function setupStockSearch() {
+            const stockInput = document.getElementById('stockInput');
+            const suggestions = document.getElementById('stockSuggestions');
+
+            stockInput.addEventListener('input', async function() {
+                const keyword = this.value.trim();
+
+                try {
+                    const response = await fetch(`/api/stock/search?keyword=${encodeURIComponent(keyword)}`);
+                    const stocks = await response.json();
+
+                    suggestions.innerHTML = '';
+                    stocks.forEach(stock => {
+                        const item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `<strong>${stock.code}</strong> - ${stock.name}`;
+                        item.onclick = () => selectStock(stock);
+                        suggestions.appendChild(item);
+                    });
+
+                    suggestions.style.display = stocks.length > 0 ? 'block' : 'none';
+                } catch (error) {
+                    console.error('搜索股票失败:', error);
+                    suggestions.style.display = 'none';
+                }
+            });
+
+            // 点击输入框时显示默认股票列表
+            stockInput.addEventListener('focus', async function() {
+                if (this.value.trim() === '') {
+                    try {
+                        const response = await fetch('/api/stock/search');
+                        const stocks = await response.json();
+
+                        suggestions.innerHTML = '';
+                        stocks.forEach(stock => {
+                            const item = document.createElement('a');
+                            item.className = 'list-group-item list-group-item-action';
+                            item.innerHTML = `<strong>${stock.code}</strong> - ${stock.name}`;
+                            item.onclick = () => selectStock(stock);
+                            suggestions.appendChild(item);
+                        });
+
+                        suggestions.style.display = stocks.length > 0 ? 'block' : 'none';
+                    } catch (error) {
+                        console.error('加载默认股票列表失败:', error);
+                    }
+                }
+            });
+
+            // 点击其他地方隐藏建议
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#stockInput') && !e.target.closest('#stockSuggestions')) {
+                    suggestions.style.display = 'none';
+                }
+            });
+        }
+
+        // 选择股票
+        function selectStock(stock) {
+            if (!selectedStocks.find(s => s.code === stock.code)) {
+                selectedStocks.push(stock);
+                updateSelectedStocks();
+            }
+            document.getElementById('stockInput').value = '';
+            document.getElementById('stockSuggestions').style.display = 'none';
+        }
+
+        // 添加股票（通过输入框直接添加代码）
+        function addStock() {
+            const input = document.getElementById('stockInput');
+            const code = input.value.trim().toUpperCase();
+            
+            if (code && !selectedStocks.find(s => s.code === code)) {
+                selectedStocks.push({ code: code, name: '未知' });
+                updateSelectedStocks();
+                input.value = '';
+            }
+        }
+
+        // 更新已选择的股票显示
+        function updateSelectedStocks() {
+            const container = document.getElementById('selectedStocks');
+            container.innerHTML = selectedStocks.map(stock => 
+                `<span class="stock-tag">
+                    ${stock.code} - ${stock.name}
+                    <span class="close" onclick="removeStock('${stock.code}')">&times;</span>
+                </span>`
+            ).join('');
+        }
+
+        // 移除股票
+        function removeStock(code) {
+            selectedStocks = selectedStocks.filter(s => s.code !== code);
+            updateSelectedStocks();
+        }
+
+        // 设置表单提交
+        function setupForm() {
+            document.getElementById('backtestForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                startBacktest();
+            });
+
+            // 监听回车键添加股票
+            document.getElementById('stockInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addStock();
+                }
+            });
+        }
+
+        // 开始回测
+        async function startBacktest() {
+            if (selectedStocks.length === 0) {
+                alert('请至少选择一只股票');
+                return;
+            }
+
+            const formData = {
+                stock_codes: selectedStocks.map(s => s.code),
+                initial_capital: document.getElementById('initialCapital').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value
+            };
+
+            try {
+                const response = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentTaskId = result.task_id;
+                    showProgress();
+                    startPolling();
+                } else {
+                    alert('启动回测失败: ' + result.error);
+                }
+            } catch (error) {
+                console.error('启动回测失败:', error);
+                alert('网络错误，请重试');
+            }
+        }
+
+        // 显示进度界面
+        function showProgress() {
+            document.querySelector('.progress-container').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        // 开始轮询任务状态
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/backtest/${currentTaskId}`);
+                    const data = await response.json();
+                    
+                    updateProgress(data);
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        showResults(data.result);
+                    } else if (data.status === 'error') {
+                        clearInterval(pollInterval);
+                        alert('回测失败: ' + data.error);
+                        hideProgress();
+                    }
+                } catch (error) {
+                    console.error('轮询状态失败:', error);
+                }
+            }, 1000);
+        }
+
+        // 更新进度显示
+        function updateProgress(data) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            progressBar.style.width = `${data.progress}%`;
+            progressBar.setAttribute('aria-valuenow', data.progress);
+            
+            let statusText = '';
+            switch (data.status) {
+                case 'pending':
+                    statusText = '准备中...';
+                    break;
+                case 'running':
+                    statusText = `回测进行中... ${Math.round(data.progress)}%`;
+                    break;
+                case 'completed':
+                    statusText = '回测完成！';
+                    break;
+                case 'error':
+                    statusText = '回测失败';
+                    break;
+            }
+            progressText.textContent = statusText;
+        }
+
+        // 隐藏进度界面
+        function hideProgress() {
+            document.querySelector('.progress-container').style.display = 'none';
+        }
+
+        // 显示回测结果
+        function showResults(result) {
+            hideProgress();
+            
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.style.display = 'block';
+            
+            // 显示汇总统计
+            displaySummaryStats(result.summary);
+            
+            // 显示详细结果
+            displayDetailResults(result.individual_results);
+            
+            // 绘制图表
+            drawProfitChart(result.individual_results);
+        }
+
+        // 显示汇总统计
+        function displaySummaryStats(summary) {
+            const container = document.getElementById('summaryStats');
+            container.innerHTML = `
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-primary">${summary.total_stocks}</h3>
+                        <p class="mb-0">总股票数</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="${summary.total_profit >= 0 ? 'profit-positive' : 'profit-negative'}">${summary.total_profit.toFixed(2)}</h3>
+                        <p class="mb-0">总盈亏 (元)</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="${summary.average_profit_rate >= 0 ? 'profit-positive' : 'profit-negative'}">${summary.average_profit_rate.toFixed(2)}%</h3>
+                        <p class="mb-0">平均收益率</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-success">${summary.successful_stocks}</h3>
+                        <p class="mb-0">成功回测数</p>
+                    </div>
+                </div>
+            `;
+            
+            if (summary.best_stock) {
+                container.innerHTML += `
+                    <div class="col-12 mt-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>最佳表现:</strong> ${summary.best_stock.code} 
+                                <span class="profit-positive">${summary.best_stock.profit_rate.toFixed(2)}%</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>最差表现:</strong> ${summary.worst_stock.code} 
+                                <span class="profit-negative">${summary.worst_stock.profit_rate.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 显示详细结果
+        function displayDetailResults(results) {
+            const container = document.getElementById('detailResults');
+            container.innerHTML = results.map(result => {
+                if (result.error) {
+                    return `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-body">
+                                    <h6 class="card-title text-danger">${result.stock_code}</h6>
+                                    <p class="card-text text-danger">${result.error}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const profitClass = result.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                const cardClass = result.profit >= 0 ? 'border-success' : 'border-danger';
+                
+                return `
+                    <div class="col-md-6 mb-3">
+                        <div class="card ${cardClass}">
+                            <div class="card-body">
+                                <h6 class="card-title">${result.stock_code}</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">最终资金</small><br>
+                                        <strong>¥${result.final_capital.toLocaleString()}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">盈亏</small><br>
+                                        <strong class="${profitClass}">¥${result.profit.toLocaleString()}</strong>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">收益率</small><br>
+                                        <strong class="${profitClass}">${result.profit_rate.toFixed(2)}%</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">胜率</small><br>
+                                        <strong>${result.winning_rate}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 绘制收益率图表
+        function drawProfitChart(results) {
+            console.log('绘制收益率图表，结果数据：', results);
+
+            const ctx = document.getElementById('profitChart').getContext('2d');
+
+            // 销毁之前的图表实例
+            if (profitChart) {
+                profitChart.destroy();
+            }
+
+            const validResults = results.filter(r => !r.error);
+            console.log('有效结果：', validResults);
+
+            // 如果没有有效结果，显示提示信息
+            if (validResults.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '16px Arial';
+                ctx.fillText('没有有效的回测结果可显示', 50, 50);
+                return;
+            }
+
+            const labels = validResults.map(r => r.stock_code);
+            const data = validResults.map(r => r.profit_rate);
+
+            console.log('图表标签：', labels);
+            console.log('图表数据：', data);
+
+            profitChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '收益率 (%)',
+                        data: data,
+                        backgroundColor: data.map(value => value >= 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)'),
+                        borderColor: data.map(value => value >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `收益率: ${context.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

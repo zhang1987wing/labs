@@ -5,7 +5,7 @@ import pandas as pd
 import talib
 import numpy as np
 
-from stock.model.stock_finance import stock_finance
+from model.stock_finance import stock_finance
 
 
 def add_stock_code_prefix(stock_code):
@@ -129,26 +129,28 @@ def calculate_indicators(stock_data):
 
 
 # 获取板块行情数据
-def get_board_concept_name_df():
-    stock_board_concept_name_df = ak.stock_board_industry_name_em()
-
-    # 查看数据结构
-    print(stock_board_concept_name_df.head())
+def get_board_industry_name_df():
+    stock_board_industry_name_df = ak.stock_board_industry_name_em()
 
     # 提取板块名称和涨跌幅
-    board_df = stock_board_concept_name_df[['板块名称', '最新价', '涨跌幅']]
+    board_df = stock_board_industry_name_df[['板块名称', '最新价', '涨跌幅']]
 
     # 按涨跌幅排序
     board_df['涨跌幅'] = board_df['涨跌幅'].astype(str).str.replace('%', '').astype(float)
     board_df = board_df.sort_values(by='涨跌幅', ascending=False)
 
-    # 输出涨幅排名前 10 的板块
-    print("涨幅前10的板块：")
-    print(board_df.head(10))
+    return board_df
 
-    # 输出跌幅排名前 10 的板块
-    print("\n跌幅前10的板块：")
-    print(board_df.tail(10))
+
+# 获取行业板块成分股
+def get_stock_board_industry_cons_em(symbol):
+    stock_board_industry_cons_em_df = ak.stock_board_industry_cons_em(symbol=symbol)
+
+    # 按涨跌幅排序
+    stock_board_industry_cons_em_df['涨跌幅'] = stock_board_industry_cons_em_df['涨跌幅'].astype(str).str.replace('%', '').astype(float)
+    stock_board_industry_cons_em_df = stock_board_industry_cons_em_df.sort_values(by='涨跌幅', ascending=False)
+
+    return stock_board_industry_cons_em_df
 
 
 # 获取某只股票的财务指标
@@ -619,25 +621,34 @@ def get_sharp_ratio():
 # 1、关注市场大跌或大涨后的高波动率。（高波动率在30以上）
 # 2、对于a股来说，关注长期下跌后或短期上涨后的相对高波动率。（高波动率在25以上），对于创业板或科创板来说，高波动率需要提高上限
 def get_market_qvix_index():
-    index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
-    # print(index_option_300etf_qvix_df)
-    index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
-    print(index_300etf_qvix)
+    """获取市场QVIX恐慌指数"""
+    try:
+        # 获取沪深300ETF期权QVIX
+        index_option_300etf_qvix_df = ak.index_option_300etf_qvix()
+        index_300etf_qvix = index_option_300etf_qvix_df.iloc[-1]
 
-    index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
-    # print(index_option_1000index_qvix_df)
-    index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
-    print(index_1000etf_qvix)
+        # 获取中证1000指数期权QVIX
+        index_option_1000index_qvix_df = ak.index_option_1000index_qvix()
+        index_1000etf_qvix = index_option_1000index_qvix_df.iloc[-1]
 
-    index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
-    # print(index_option_cyb_qvix_df)
-    index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
-    print(index_cyb_qvix)
+        # 获取创业板ETF期权QVIX
+        index_option_cyb_qvix_df = ak.index_option_cyb_qvix()
+        index_cyb_qvix = index_option_cyb_qvix_df.iloc[-1]
 
-    index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
-    # print(index_option_kcb_qvix_df)
-    index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
-    print(index_kcb_qvix)
+        # 获取科创板50ETF期权QVIX
+        index_option_kcb_qvix_df = ak.index_option_kcb_qvix()
+        index_kcb_qvix = index_option_kcb_qvix_df.iloc[-1]
+
+        return {
+            'date': index_300etf_qvix['date'],
+            'qvix_300': float(index_300etf_qvix['close']),
+            'qvix_1000': float(index_1000etf_qvix['close']),
+            'qvix_cyb': float(index_cyb_qvix['close']),
+            'qvix_kcb': float(index_kcb_qvix['close'])
+        }
+    except Exception as e:
+        print(f"获取QVIX数据失败: {e}")
+        return None
 
 
 # 申万一级行业信息
@@ -652,5 +663,36 @@ def get_sw_index_third_info():
     print(sw_index_third_info_df)
 
 
+# 大盘拥挤度
+# 衡量市场微观结构恶化的指标，即成交额排名前5%的个股的成交额占全部A股占比创下历史极值，接近50%，预示着结构恶化，市场行情进入预警区域，或见顶，或风格发生转换。截止到2022年11月，历史上类似的情形出现过5次，市场均发生了巨大的反转，有2次市场进入牛市或维持牛市之中，且市场均发生了风格切换，分别是2008年10月和2015年1月。另三次发生了“牛转熊”现象。
+def get_stock_a_congestion_lg():
+    stock_a_congestion_lg_df = ak.stock_a_congestion_lg()
+    print(stock_a_congestion_lg_df)
+
+
+# 获取概念板块行情
+def get_stock_board_concept_name_em():
+    stock_board_concept_name_em_df = ak.stock_board_concept_name_em()
+
+    # 提取板块名称和涨跌幅
+    board_df = stock_board_concept_name_em_df[['板块名称', '最新价', '涨跌幅']]
+
+    # 按涨跌幅排序
+    board_df['涨跌幅'] = board_df['涨跌幅'].astype(str).str.replace('%', '').astype(float)
+    board_df = board_df.sort_values(by='涨跌幅', ascending=False)
+
+    return board_df
+
+
+# 获取概念板块成分股
+def get_stock_board_concept_cons_em(symbol):
+    stock_board_concept_cons_em_df = ak.stock_board_concept_cons_em(symbol=symbol)
+    return stock_board_concept_cons_em_df
+
 if __name__ == "__main__":
-    get_lhb_info('20250916')
+    # get_lhb_info('20250917')
+    # get_stock_a_congestion_lg()
+    # print(get_market_qvix_index())
+    # get_board_industry_name_df()
+    # get_stock_board_concept_name_em()
+    get_stock_board_concept_cons_em('光通信模块')
