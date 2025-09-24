@@ -687,7 +687,7 @@ def get_stock_board_concept_name_em():
 # 获取概念板块成分股
 def get_stock_board_concept_cons_em(symbol):
     stock_board_concept_cons_em_df = ak.stock_board_concept_cons_em(symbol=symbol)
-    print(stock_board_concept_cons_em_df)
+    return stock_board_concept_cons_em_df
 
 if __name__ == "__main__":
     # get_lhb_info('20250917')
