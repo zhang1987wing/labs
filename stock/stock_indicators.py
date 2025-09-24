@@ -128,7 +128,7 @@ def calculate_indicators(stock_data):
     stock_data["rsi"] = talib.RSI(close, timeperiod=14)
 
 
-# 获取板块行情数据
+# 获取行情板块数据
 def get_board_industry_name_df():
     stock_board_industry_name_df = ak.stock_board_industry_name_em()
 
@@ -666,8 +666,21 @@ def get_sw_index_third_info():
 # 大盘拥挤度
 # 衡量市场微观结构恶化的指标，即成交额排名前5%的个股的成交额占全部A股占比创下历史极值，接近50%，预示着结构恶化，市场行情进入预警区域，或见顶，或风格发生转换。截止到2022年11月，历史上类似的情形出现过5次，市场均发生了巨大的反转，有2次市场进入牛市或维持牛市之中，且市场均发生了风格切换，分别是2008年10月和2015年1月。另三次发生了“牛转熊”现象。
 def get_stock_a_congestion_lg():
-    stock_a_congestion_lg_df = ak.stock_a_congestion_lg()
-    print(stock_a_congestion_lg_df)
+    """获取大盘拥挤度指标"""
+    try:
+        stock_a_congestion_lg_df = ak.stock_a_congestion_lg()
+        if not stock_a_congestion_lg_df.empty:
+            # 获取最新数据
+            latest_data = stock_a_congestion_lg_df.iloc[-1]
+            return {
+                'date': str(latest_data['date']),
+                'congestion_rate': float(latest_data['congestion'] * 100),
+                'SSE_index': float(latest_data['close']) if 'close' in latest_data else None
+            }
+        return None
+    except Exception as e:
+        print(f"获取大盘拥挤度数据失败: {e}")
+        return None
 
 
 # 获取概念板块行情
@@ -689,10 +702,17 @@ def get_stock_board_concept_cons_em(symbol):
     stock_board_concept_cons_em_df = ak.stock_board_concept_cons_em(symbol=symbol)
     return stock_board_concept_cons_em_df
 
+# 获取申万三级行业成分
+def get_sw_index_third_cons(symbol):
+    sw_index_third_cons_df = ak.sw_index_third_cons(symbol)
+    print(sw_index_third_cons_df)
+
 if __name__ == "__main__":
     # get_lhb_info('20250917')
-    # get_stock_a_congestion_lg()
+    get_stock_a_congestion_lg()
     # print(get_market_qvix_index())
     # get_board_industry_name_df()
-    # get_stock_board_concept_name_em()
-    get_stock_board_concept_cons_em('光通信模块')
+    get_stock_board_concept_name_em()
+    # get_stock_board_concept_cons_em('光通信模块')
+    # get_sw_index_third_info()
+    # get_sw_index_third_cons("850111.SI")
