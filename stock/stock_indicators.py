@@ -713,7 +713,10 @@ def get_stock_market_pe_lg():
     stock_market_pe_lg_df = ak.stock_market_pe_lg(symbol="上证")
     print(stock_market_pe_lg_df)
 
+# 获取主板市净率
 # 获取新开户数量
+# 万得全A价格指数
+# 万得全A利润同比
 
 if __name__ == "__main__":
     # get_lhb_info('20250925')
