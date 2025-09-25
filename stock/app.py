@@ -296,6 +296,28 @@ def get_qvix_index():
         return jsonify({'error': f'获取QVIX指数失败: {str(e)}'}), 500
 
 
+@app.route('/api/congestion', methods=['GET'])
+def get_congestion_index():
+    """获取大盘拥挤度指数"""
+    try:
+        # 从stock_indicators获取真实大盘拥挤度数据
+        congestion_data = stock_indicators.get_stock_a_congestion_lg()
+
+        if congestion_data:
+            return jsonify(congestion_data)
+        else:
+            # 如果获取失败，返回默认数据
+            return jsonify({
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'congestion_rate': None,
+                'SSE_index': None,
+                'note': '使用默认数据，实时数据获取失败'
+            })
+
+    except Exception as e:
+        return jsonify({'error': f'获取大盘拥挤度指数失败: {str(e)}'}), 500
+
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': '接口不存在'}), 404

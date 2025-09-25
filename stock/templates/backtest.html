@@ -94,6 +94,41 @@
         #stockSuggestions .list-group-item:last-child {
             border-bottom: none;
         }
+
+        /* 大盘拥挤度面板样式 */
+        .congestion-panel {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .congestion-item {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .congestion-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .congestion-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .congestion-info {
+            margin-left: 8px;
+            font-size: 0.8em;
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        .congestion-info:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -130,6 +165,30 @@
                     </div>
                     <div class="text-center mt-2">
                         <small id="qvixDate">更新时间: --</small>
+                    </div>
+                </div>
+
+                <!-- 大盘拥挤度面板 -->
+                <div class="congestion-panel">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-pie"></i> 大盘拥挤度
+                        <i class="fas fa-info-circle congestion-info"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="衡量市场微观结构恶化的指标。当成交额排名前5%的个股成交额占全部A股比例接近50%时，预示着结构恶化，市场行情进入预警区域，或见顶，或风格发生转换。历史上类似情形出现过5次，均发生了巨大的市场反转。"></i>
+                    </h5>
+                    <div class="row" id="congestionData">
+                        <div class="col-6 congestion-item">
+                            <div class="congestion-value" id="sseIndex">--</div>
+                            <div class="congestion-label">上证指数</div>
+                        </div>
+                        <div class="col-6 congestion-item">
+                            <div class="congestion-value" id="congestionRate">--</div>
+                            <div class="congestion-label">拥挤度 (%)</div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small id="congestionDate">更新时间: --</small>
                     </div>
                 </div>
 
@@ -275,13 +334,20 @@
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             loadQVIXData();
+            loadCongestionData();
             setupStockSearch();
             setupForm();
-            
+
+            // 初始化Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
             // 设置默认日期
             const today = new Date();
             const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-            
+
             document.getElementById('startDate').value = oneYearAgo.toISOString().split('T')[0];
             document.getElementById('endDate').value = today.toISOString().split('T')[0];
         });
@@ -299,6 +365,42 @@
                 document.getElementById('qvixDate').textContent = `更新时间: ${data.date}`;
             } catch (error) {
                 console.error('加载QVIX数据失败:', error);
+            }
+        }
+
+        // 加载大盘拥挤度数据
+        async function loadCongestionData() {
+            try {
+                const response = await fetch('/api/congestion');
+                const data = await response.json();
+
+                // 显示上证指数
+                if (data.SSE_index !== null && data.SSE_index !== undefined) {
+                    document.getElementById('sseIndex').textContent = data.SSE_index.toFixed(2);
+                } else {
+                    document.getElementById('sseIndex').textContent = '--';
+                }
+
+                // 显示拥挤度
+                if (data.congestion_rate !== null && data.congestion_rate !== undefined) {
+                    document.getElementById('congestionRate').textContent = data.congestion_rate.toFixed(2);
+
+                    // 根据拥挤度值设置颜色
+                    const rateElement = document.getElementById('congestionRate');
+                    if (data.congestion_rate >= 45) {
+                        rateElement.style.color = '#ff4757'; // 红色 - 极度拥挤
+                    } else if (data.congestion_rate >= 35) {
+                        rateElement.style.color = '#ffa502'; // 橙色 - 较拥挤
+                    } else {
+                        rateElement.style.color = '#2ed573'; // 绿色 - 正常
+                    }
+                } else {
+                    document.getElementById('congestionRate').textContent = '--';
+                }
+
+                document.getElementById('congestionDate').textContent = `更新时间: ${data.date}`;
+            } catch (error) {
+                console.error('加载大盘拥挤度数据失败:', error);
             }
         }
 
