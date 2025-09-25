@@ -707,10 +707,16 @@ def get_sw_index_third_cons(symbol):
     sw_index_third_cons_df = ak.sw_index_third_cons(symbol)
     print(sw_index_third_cons_df)
 
+
+# 获取主板市盈率
+def get_stock_market_pe_lg():
+    stock_market_pe_lg_df = ak.stock_market_pe_lg(symbol="上证")
+    print(stock_market_pe_lg_df)
+
 # 获取新开户数量
 
 if __name__ == "__main__":
-    get_lhb_info('20250925')
+    # get_lhb_info('20250925')
     # get_stock_a_congestion_lg()
     # print(get_market_qvix_index())
     # get_board_industry_name_df()
@@ -718,3 +724,4 @@ if __name__ == "__main__":
     # get_stock_board_concept_cons_em('光通信模块')
     # get_sw_index_third_info()
     # get_sw_index_third_cons("850111.SI")
+    get_stock_market_pe_lg()
