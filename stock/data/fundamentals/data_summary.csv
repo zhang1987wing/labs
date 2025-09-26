@@ -1,0 +1,9 @@
+﻿filename,description,records,start_date,end_date,columns_count,file_size_kb
+cyb_index.csv,创业板指,3725,2010-06-01,2025-09-26,11,316.36
+shenzhen_pb.csv,深证主板PB,5038,2005-01-04,2025-09-25,5,168.18
+csi_all_index.csv,中证全指,3441,2011-08-02,2025-09-26,11,299.83
+shenzhen_pe.csv,深证主板PE,334,1997-12-31,2025-09-25,3,8.26
+shanghai_pe.csv,上证主板PE,322,1999-01-29,2025-09-25,3,7.82
+shanghai_pb.csv,上证主板PB,5038,2005-01-04,2025-09-25,5,165.22
+cyb_pb.csv,创业板PB,3867,2009-11-02,2025-09-25,5,125.71
+cyb_pe.csv,创业板PE,184,2010-06-30,2025-09-25,3,4.46

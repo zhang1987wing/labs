@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股基本面分析 - 股票分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+            width: 100%;
+            margin-bottom: 50px;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            background-color: #fed7d7;
+            color: #9b2c2c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #fc8181;
+        }
+
+        .info-panel {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .chart-container {
+                height: 400px;
+                padding: 20px;
+                margin-bottom: 40px;
+            }
+
+            .legend {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <a href="/" class="btn btn-outline-primary back-button">
+            <i class="fas fa-arrow-left"></i> 返回首页
+        </a>
+
+        <div class="header">
+            <h1><i class="fas fa-chart-area"></i> A股基本面分析</h1>
+            <p class="text-muted">各板块市盈率、市净率走势分析</p>
+        </div>
+
+        <div class="info-panel">
+            <h5><i class="fas fa-info-circle"></i> 数据说明</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <ul class="mb-0">
+                        <li><strong>市盈率(PE)</strong>：股价与每股收益的比率，反映投资回收期</li>
+                        <li><strong>中证全A</strong>：代表整个A股市场走势</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <ul class="mb-0">
+                        <li><strong>拥挤度指标</strong>：反映市场参与度和流动性状况</li>
+                        <li><strong>QVIX恐慌指数</strong>：衡量市场恐慌和波动预期</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <ul class="mb-0">
+                        <li><strong>新开户账户数</strong>：反映市场情绪和参与热情</li>
+                        <li><strong>图表时间范围</strong>：以最长数据序列为准</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表1：中证全A指数 vs 上证主板市盈率 -->
+        <div class="chart-container">
+            <div class="chart-title">中证全A指数 vs 上证主板市盈率</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>中证全A指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ef4444;"></div>
+                    <span>上证PE</span>
+                </div>
+            </div>
+            <canvas id="chart1"></canvas>
+        </div>
+
+        <!-- 图表2：中证全A指数 vs 深证主板PE -->
+        <div class="chart-container">
+            <div class="chart-title">中证全A指数 vs 深证主板市盈率</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>中证全A指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #10b981;"></div>
+                    <span>深证PE</span>
+                </div>
+            </div>
+            <canvas id="chart2"></canvas>
+        </div>
+
+        <!-- 图表3：中证全A指数 vs 创业板市盈率 -->
+        <div class="chart-container">
+            <div class="chart-title">中证全A指数 vs 创业板市盈率</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>中证全A指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                    <span>创业板PE</span>
+                </div>
+            </div>
+            <canvas id="chart3"></canvas>
+        </div>
+
+        <!-- 图表4：中证全A指数 vs 新开户账户数 -->
+        <div class="chart-container">
+            <div class="chart-title">中证全A指数 vs 新开户账户数</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>中证全A指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f59e0b;"></div>
+                    <span>新开户账户数</span>
+                </div>
+            </div>
+            <canvas id="chart4"></canvas>
+        </div>
+
+        <!-- 图表5：上证指数 vs 上证拥挤度 -->
+        <div class="chart-container">
+            <div class="chart-title">上证指数 vs 上证拥挤度</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>上证指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #22c55e;"></div>
+                    <span>上证拥挤度</span>
+                </div>
+            </div>
+            <canvas id="chart5"></canvas>
+        </div>
+
+        <!-- 图表6：创业板指数 vs 创业板QVIX -->
+        <div class="chart-container">
+            <div class="chart-title">创业板指数 vs 创业板QVIX</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                    <span>创业板指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f59e0b;"></div>
+                    <span>创业板QVIX</span>
+                </div>
+            </div>
+            <canvas id="chart6"></canvas>
+        </div>
+
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="fas fa-clock"></i> 数据更新时间: <span id="updateTime">--</span>
+            </small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class FundamentalsChart {
+            constructor() {
+                this.charts = {};
+                this.data = {};
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.loadAllData();
+                    this.createAllCharts();
+                    this.updateTime();
+                } catch (error) {
+                    console.error('初始化失败:', error);
+                    this.showError('数据加载失败，请检查数据文件是否存在');
+                }
+            }
+
+            async loadAllData() {
+                const dataTypes = [
+                    'csi_all', 'shanghai_pe', 'shenzhen_pe', 'cyb_pe', 'account_increase',
+                    'shanghai_congestion', 'cyb_qvix', 'shanghai_index', 'cyb_index',
+                    'shanghai_index_from_congestion'
+                ];
+
+                for (const type of dataTypes) {
+                    try {
+                        const response = await fetch(`/api/fundamentals/data/${type}`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        this.data[type] = result.data;
+                        console.log(`${type} 数据量:`, result.data.length);
+                    } catch (error) {
+                        console.error(`加载${type}数据失败:`, error);
+                        this.data[type] = [];
+                    }
+                }
+
+                // 不再需要全局时间同步，每个图表独立处理
+                console.log('数据加载完成，开始创建图表');
+            }
+
+            logDatasetInfo() {
+                // 记录所有数据集的基本信息
+                Object.keys(this.data).forEach(dataType => {
+                    const dataset = this.data[dataType];
+                    if (dataset && dataset.length > 0) {
+                        const dates = dataset.map(item => new Date(item.date));
+                        const minDate = new Date(Math.min(...dates));
+                        const maxDate = new Date(Math.max(...dates));
+                        console.log(`${dataType}: ${minDate.toISOString().slice(0,10)} 到 ${maxDate.toISOString().slice(0,10)}, 数据量: ${dataset.length}`);
+                    }
+                });
+            }
+
+            createAllCharts() {
+                // 记录数据集信息
+                this.logDatasetInfo();
+
+                // 图表1: 中证全A vs 上证PE
+                this.createSyncedChart('chart1', [
+                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                    { dataKey: 'shanghai_pe', label: '上证PE', type: 'ratio', color: '#ef4444', yAxisID: 'y1' }
+                ]);
+
+                // 图表2: 中证全A vs 深证PE
+                this.createSyncedChart('chart2', [
+                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                    { dataKey: 'shenzhen_pe', label: '深证PE', type: 'ratio', color: '#10b981', yAxisID: 'y1' }
+                ]);
+
+                // 图表3: 中证全A vs 创业板PE
+                this.createSyncedChart('chart3', [
+                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                    { dataKey: 'cyb_pe', label: '创业板PE', type: 'ratio', color: '#8b5cf6', yAxisID: 'y1' }
+                ]);
+
+                // 图表4: 中证全A vs 新开户账户数
+                this.createSyncedChart('chart4', [
+                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                    { dataKey: 'account_increase', label: '新开户账户数', type: 'account', color: '#f59e0b', yAxisID: 'y1' }
+                ]);
+
+                // 图表5: 上证指数 vs 上证拥挤度
+                this.createSyncedChart('chart5', [
+                    { dataKey: 'shanghai_index_from_congestion', label: '上证指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                    { dataKey: 'shanghai_congestion', label: '上证拥挤度', type: 'congestion', color: '#22c55e', yAxisID: 'y1' }
+                ]);
+
+                // 图表6: 创业板指数 vs 创业板QVIX
+                this.createSyncedChart('chart6', [
+                    { dataKey: 'cyb_index', label: '创业板指数', type: 'index', color: '#8b5cf6', yAxisID: 'y' },
+                    { dataKey: 'cyb_qvix', label: '创业板QVIX', type: 'qvix', color: '#f59e0b', yAxisID: 'y1' }
+                ]);
+            }
+
+            createSyncedChart(canvasId, datasetConfigs) {
+                // 为当前图表计算最长时间范围
+                let chartMinDate = null;
+                let chartMaxDate = null;
+
+                datasetConfigs.forEach(config => {
+                    const dataset = this.data[config.dataKey];
+                    if (dataset && dataset.length > 0) {
+                        const dates = dataset.map(item => new Date(item.date));
+                        const minDate = new Date(Math.min(...dates));
+                        const maxDate = new Date(Math.max(...dates));
+
+                        // 找到最早的起始时间（最长时间跨度的开始）
+                        if (!chartMinDate || minDate < chartMinDate) {
+                            chartMinDate = minDate;
+                        }
+
+                        // 找到最晚的结束时间（最长时间跨度的结束）
+                        if (!chartMaxDate || maxDate > chartMaxDate) {
+                            chartMaxDate = maxDate;
+                        }
+                    }
+                });
+
+                console.log(`${canvasId} 时间范围: ${chartMinDate?.toISOString().slice(0,10)} 到 ${chartMaxDate?.toISOString().slice(0,10)}`);
+
+                // 保持原始数据，不进行时间过滤，让Chart.js自动处理不同时间范围的数据
+                const syncedDatasets = datasetConfigs.map(config => {
+                    const dataset = this.data[config.dataKey];
+                    if (!dataset) return { ...config, data: [] };
+
+                    console.log(`${config.dataKey} 在${canvasId}中原始数据量: ${dataset.length}`);
+
+                    return {
+                        ...config,
+                        data: dataset
+                    };
+                });
+
+                this.createChart(canvasId, syncedDatasets);
+            }
+
+            createChart(canvasId, datasets) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+
+                // 销毁已存在的图表
+                if (this.charts[canvasId]) {
+                    this.charts[canvasId].destroy();
+                }
+
+                // 准备图表数据
+                const chartDatasets = datasets.map(dataset => {
+                    let chartData = dataset.data.map(item => ({
+                        x: new Date(item.date).getTime(),
+                        y: dataset.type === 'index' ? item.close :
+                           dataset.type === 'account' ? item.value :
+                           dataset.type === 'congestion' ? item.value :
+                           dataset.type === 'qvix' ? item.value :
+                           item.value
+                    }));
+
+                    // 按时间排序
+                    chartData.sort((a, b) => a.x - b.x);
+
+                    return {
+                        label: dataset.label,
+                        data: chartData,
+                        borderColor: dataset.color,
+                        backgroundColor: dataset.color + '20',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        yAxisID: dataset.yAxisID,
+                        pointRadius: 2, // 所有数据现在都是月度，都显示数据点
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: dataset.color,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        spanGaps: 60 * 24 * 60 * 60 * 1000, // 允许跨越最多60天的数据间隙（约2个月）
+                        segment: {
+                            borderDash: function(ctx) {
+                                // 如果数据点间隔超过一定时间，使用虚线
+                                if (ctx.p0 && ctx.p1) {
+                                    const timeDiff = ctx.p1.parsed.x - ctx.p0.parsed.x;
+                                    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+                                    return timeDiff > thirtyDays ? [5, 5] : undefined;
+                                }
+                                return undefined;
+                            }
+                        }
+                    };
+                });
+
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: chartDatasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: 'x'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false  // 使用自定义图例
+                            },
+                            tooltip: {
+                                position: 'nearest',
+                                caretPadding: 20,
+                                cornerRadius: 8,
+                                itemSort: function(a, b) {
+                                    // 按数据集标签排序，指数在前
+                                    if (a.dataset.label.includes('指数')) return -1;
+                                    if (b.dataset.label.includes('指数')) return 1;
+                                    return 0;
+                                },
+                                filter: function(tooltipItem) {
+                                    // 显示所有有效数据点
+                                    return tooltipItem.parsed.y !== null &&
+                                           tooltipItem.parsed.y !== undefined &&
+                                           !isNaN(tooltipItem.parsed.y);
+                                },
+                                titleCallback: function(context) {
+                                    if (context.length > 0) {
+                                        return new Date(context[0].parsed.x).toLocaleDateString('zh-CN');
+                                    }
+                                    return '';
+                                },
+                                labelCallback: function(context) {
+                                    const label = context.dataset.label;
+                                    if (context.parsed.y !== null && context.parsed.y !== undefined && !isNaN(context.parsed.y)) {
+                                        let value = context.parsed.y;
+                                        let unit = '';
+
+                                        // 根据数据类型确定显示格式
+                                        if (label.includes('指数')) {
+                                            value = value.toFixed(2);
+                                        } else if (label.includes('PE')) {
+                                            value = value.toFixed(2);
+                                            unit = '倍';
+                                        } else if (label.includes('新开户')) {
+                                            value = value.toFixed(1);
+                                            unit = '万户';
+                                        } else if (label.includes('拥挤度')) {
+                                            value = value.toFixed(2);
+                                            unit = '%';
+                                        } else if (label.includes('QVIX')) {
+                                            value = value.toFixed(2);
+                                        }
+
+                                        return `${label}: ${value}${unit}`;
+                                    }
+                                    return null;
+                                },
+                                callbacks: {
+                                    footer: function(tooltipItems) {
+                                        const totalDatasets = tooltipItems.length > 0 ?
+                                            tooltipItems[0].chart.data.datasets.length : 0;
+                                        const visibleItems = tooltipItems.filter(item =>
+                                            item.parsed.y !== null &&
+                                            item.parsed.y !== undefined &&
+                                            !isNaN(item.parsed.y)
+                                        );
+
+                                        if (visibleItems.length < totalDatasets && totalDatasets > 1) {
+                                            const missingCount = totalDatasets - visibleItems.length;
+                                            return `${missingCount}个指标在此时间点暂无数据`;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'quarter',
+                                    stepSize: 2,
+                                    displayFormats: {
+                                        year: 'yyyy',
+                                        quarter: 'yyyy-MM',
+                                        month: 'yyyy-MM'
+                                    },
+                                    tooltipFormat: 'yyyy-MM-dd'
+                                },
+                                title: {
+                                    display: true,
+                                    text: '时间',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                },
+                                ticks: {
+                                    maxTicksLimit: 12,
+                                    padding: 5,
+                                    source: 'data',
+                                    autoSkip: true
+                                },
+                                adapters: {
+                                    date: {}
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: '指数点位',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                },
+                                ticks: {
+                                    padding: 10
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: this.getY1AxisTitle(chartDatasets),
+                                    padding: 10
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    padding: 10
+                                }
+                            },
+                            y2: {
+                                type: 'linear',
+                                display: this.hasY2Axis(chartDatasets),
+                                position: 'left',
+                                offset: true,
+                                title: {
+                                    display: true,
+                                    text: this.getY2AxisTitle(chartDatasets),
+                                    padding: 10
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    padding: 10
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            getY1AxisTitle(chartDatasets) {
+                const hasAccount = chartDatasets.some(dataset =>
+                    dataset.label.includes('新开户账户数')
+                );
+                const hasPE = chartDatasets.some(dataset =>
+                    dataset.label.includes('PE')
+                );
+
+                if (hasAccount) {
+                    return '新开户账户数';
+                } else if (hasPE) {
+                    return 'PE倍数';
+                }
+                return '';
+            }
+
+            getY2AxisTitle(chartDatasets) {
+                const hasCongestion = chartDatasets.some(dataset =>
+                    dataset.label.includes('拥挤度')
+                );
+                const hasQvix = chartDatasets.some(dataset =>
+                    dataset.label.includes('QVIX')
+                );
+
+                if (hasCongestion) {
+                    return '拥挤度(%)';
+                } else if (hasQvix) {
+                    return 'QVIX指数';
+                }
+                return '';
+            }
+
+            hasY2Axis(chartDatasets) {
+                return chartDatasets.some(dataset =>
+                    dataset.yAxisID === 'y2'
+                );
+            }
+
+            updateTime() {
+                document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
+            }
+
+            showError(message) {
+                const container = document.querySelector('.main-container');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+                container.insertBefore(errorDiv, container.firstChild.nextSibling);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            new FundamentalsChart();
+        });
+    </script>
+</body>
+</html>

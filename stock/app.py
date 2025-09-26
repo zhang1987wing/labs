@@ -318,6 +318,190 @@ def get_congestion_index():
         return jsonify({'error': f'获取大盘拥挤度指数失败: {str(e)}'}), 500
 
 
+@app.route('/fundamentals')
+def fundamentals():
+    """A股基本面分析页面"""
+    return render_template('fundamentals.html')
+
+
+@app.route('/api/fundamentals/data/<data_type>')
+def get_fundamentals_data(data_type):
+    """获取基本面数据API"""
+    try:
+        import pandas as pd
+
+        data_dir = 'data/fundamentals'
+        file_mapping = {
+            'csi_all': 'csi_all_index.csv',
+            'cyb_index': 'cyb_index.csv',
+            'shanghai_index': 'shanghai_index.csv',
+            'shanghai_index_from_congestion': 'shanghai_congestion.csv',  # 从拥挤度文件中提取上证指数
+            'shanghai_pe': 'shanghai_pe.csv',
+            'shanghai_pb': 'shanghai_pb.csv',
+            'shenzhen_pe': 'shenzhen_pe.csv',
+            'shenzhen_pb': 'shenzhen_pb.csv',
+            'cyb_pe': 'cyb_pe.csv',
+            'cyb_pb': 'cyb_pb.csv',
+            'account_increase': 'account_increase.csv',
+            'shanghai_congestion': 'shanghai_congestion.csv',
+            'cyb_qvix': 'cyb_qvix.csv',
+            'shanghai_qvix': 'shanghai_qvix.csv'
+        }
+
+        if data_type not in file_mapping:
+            return jsonify({'error': '不支持的数据类型'}), 400
+
+        file_path = os.path.join(data_dir, file_mapping[data_type])
+
+        if not os.path.exists(file_path):
+            return jsonify({'error': '数据文件不存在，请先运行数据下载脚本'}), 404
+
+        # 读取CSV数据
+        df = pd.read_csv(file_path)
+
+        # 转换为前端需要的格式
+        result = []
+
+        if data_type in ['csi_all', 'cyb_index', 'shanghai_index', 'shanghai_index_from_congestion']:
+            # 指数数据
+            if data_type == 'shanghai_index_from_congestion':
+                # 从拥挤度文件中提取上证指数数据，使用全量日度数据
+                for _, row in df.iterrows():
+                    date_str = row['date']
+                    result.append({
+                        'date': date_str,
+                        'close': float(row['close']),
+                        'open': float(row['close']),  # 使用close作为默认值
+                        'high': float(row['close']),  # 使用close作为默认值
+                        'low': float(row['close'])    # 使用close作为默认值
+                    })
+            elif data_type in ['csi_all', 'shanghai_index']:
+                # 对中证全A指数和上证指数进行月度处理，取每月最后一天
+                monthly_data = {}
+                for _, row in df.iterrows():
+                    date_str = row['date'] if 'date' in row else row['日期']
+                    year_month = date_str[:7]  # 获取YYYY-MM格式
+
+                    # 保留每个月最后出现的数据（通常是最后一天）
+                    monthly_data[year_month] = {
+                        'date': date_str,
+                        'close': float(row['close'] if 'close' in row else row['收盘']),
+                        'open': float(row['open'] if 'open' in row else row['开盘']),
+                        'high': float(row['high'] if 'high' in row else row['最高']),
+                        'low': float(row['low'] if 'low' in row else row['最低'])
+                    }
+
+                # 转换为结果列表
+                for year_month in sorted(monthly_data.keys()):
+                    result.append(monthly_data[year_month])
+            else:
+                # 创业板指数保持原样
+                for _, row in df.iterrows():
+                    result.append({
+                        'date': row['日期'],
+                        'close': float(row['收盘']),
+                        'open': float(row['开盘']),
+                        'high': float(row['最高']),
+                        'low': float(row['最低'])
+                    })
+        elif data_type == 'account_increase':
+            # 新开户账户数数据
+            import calendar
+            for _, row in df.iterrows():
+                try:
+                    # 处理特殊的日期格式 2021.01 -> 2021-01-31 (月末)
+                    date_str_raw = str(row['date']).strip()
+                    date_parts = date_str_raw.split('.')
+
+                    if len(date_parts) != 2:
+                        continue
+
+                    year = int(date_parts[0])
+                    month_str = date_parts[1]
+
+                    # 处理pandas将2024.10读取为2024.1的情况
+                    if len(month_str) == 1 and month_str in ['1', '2', '3']:
+                        # 如果是单位数且是1,2,3，可能是10,11,12月被截断
+                        # 检查原始数据来确定
+                        if month_str == '1':
+                            month = 10  # 2024.1 实际是 2024.10
+                        elif month_str == '2':
+                            month = 11  # 2024.2 实际是 2024.11
+                        elif month_str == '3':
+                            month = 12  # 2024.3 实际是 2024.12
+                    else:
+                        month = int(month_str)
+
+                    # 验证年月范围
+                    if year < 2020 or year > 2030:
+                        continue
+                    if month < 1 or month > 12:
+                        continue
+
+                    # 获取该月的最后一天
+                    last_day = calendar.monthrange(year, month)[1]
+                    date_str = f"{year:04d}-{month:02d}-{last_day:02d}"
+
+                    result.append({
+                        'date': date_str,
+                        'value': float(row['accounts'])
+                    })
+                except Exception as e:
+                    continue
+        elif data_type == 'shanghai_congestion':
+            # 上证拥挤度数据
+            for _, row in df.iterrows():
+                result.append({
+                    'date': row['date'],
+                    'value': float(row['congestion']) * 100  # 转换为百分比
+                })
+        elif data_type in ['cyb_qvix', 'shanghai_qvix']:
+            # QVIX恐慌指数数据
+            for _, row in df.iterrows():
+                # 跳过空值行
+                if pd.isna(row['close']) or row['close'] == '':
+                    continue
+                result.append({
+                    'date': row['date'],
+                    'value': float(row['close'])
+                })
+        else:
+            # PE/PB数据
+            for _, row in df.iterrows():
+                if 'pe' in data_type:
+                    # PE数据
+                    if '平均市盈率' in df.columns:
+                        value = float(row['平均市盈率'])
+                    elif '市盈率' in df.columns:
+                        value = float(row['市盈率'])
+                    else:
+                        # 如果都没有，尝试取第三列（通常是数值列）
+                        value = float(row.iloc[2])
+                else:
+                    # PB数据
+                    if '市净率' in df.columns:
+                        value = float(row['市净率'])
+                    elif '平均市净率' in df.columns:
+                        value = float(row['平均市净率'])
+                    else:
+                        # 如果都没有，尝试取第三列（通常是数值列）
+                        value = float(row.iloc[2])
+
+                result.append({
+                    'date': row['日期'],
+                    'value': value
+                })
+
+        return jsonify({
+            'data': result,
+            'total': len(result),
+            'data_type': data_type
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'获取数据失败: {str(e)}'}), 500
+
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': '接口不存在'}), 404

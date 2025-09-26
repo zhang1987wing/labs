@@ -708,22 +708,39 @@ def get_sw_index_third_cons(symbol):
     print(sw_index_third_cons_df)
 
 
-# 获取主板市盈率
-def get_stock_market_pe_lg():
-    stock_market_pe_lg_df = ak.stock_market_pe_lg(symbol="上证")
+# 获取市盈率
+def get_stock_market_pe_lg(symbol="上证"):
+    """
+    获取市场市盈率数据
+    symbol: 上证, 深证, 创业板
+    """
+    stock_market_pe_lg_df = ak.stock_market_pe_lg(symbol=symbol)
     return stock_market_pe_lg_df
 
 
-# 获取主板市净率
-def get_stock_market_pb_lg():
-    stock_market_pb_lg_df = ak.stock_market_pb_lg(symbol="上证")
+# 获取市净率
+def get_stock_market_pb_lg(symbol="上证"):
+    """
+    获取市场市净率数据
+    symbol: 上证, 深证, 创业板
+    """
+    stock_market_pb_lg_df = ak.stock_market_pb_lg(symbol=symbol)
     return stock_market_pb_lg_df
 
-# 获取新开户数量
 
+# 获取指数数据（通用方法）
+def get_index_data(symbol="000985"):
+    """
+    获取指数历史数据
+    symbol: 指数代码
+    000985: 中证全指
+    399006: 创业板指
+    000001: 上证指数
+    399001: 深证成指
+    """
+    index_df = ak.index_zh_a_hist(symbol=symbol)
+    return index_df
 
-# 万得全A价格指数
-# 万得全A利润同比
 
 if __name__ == "__main__":
     # get_lhb_info('20250925')
@@ -735,4 +752,5 @@ if __name__ == "__main__":
     # get_sw_index_third_info()
     # get_sw_index_third_cons("850111.SI")
     # get_stock_market_pe_lg()
-    get_stock_market_pb_lg()
+    # get_stock_market_pb_lg()
+    get_index_data()
