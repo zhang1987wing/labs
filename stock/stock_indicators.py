@@ -711,10 +711,17 @@ def get_sw_index_third_cons(symbol):
 # 获取主板市盈率
 def get_stock_market_pe_lg():
     stock_market_pe_lg_df = ak.stock_market_pe_lg(symbol="上证")
-    print(stock_market_pe_lg_df)
+    return stock_market_pe_lg_df
+
 
 # 获取主板市净率
+def get_stock_market_pb_lg():
+    stock_market_pb_lg_df = ak.stock_market_pb_lg(symbol="上证")
+    return stock_market_pb_lg_df
+
 # 获取新开户数量
+
+
 # 万得全A价格指数
 # 万得全A利润同比
 
@@ -727,4 +734,5 @@ if __name__ == "__main__":
     # get_stock_board_concept_cons_em('光通信模块')
     # get_sw_index_third_info()
     # get_sw_index_third_cons("850111.SI")
-    get_stock_market_pe_lg()
+    # get_stock_market_pe_lg()
+    get_stock_market_pb_lg()
