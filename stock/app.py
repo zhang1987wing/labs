@@ -345,19 +345,33 @@ def get_fundamentals_data(data_type):
             'account_increase': 'account_increase.csv',
             'shanghai_congestion': 'shanghai_congestion.csv',
             'cyb_qvix': 'cyb_qvix.csv',
-            'shanghai_qvix': 'shanghai_qvix.csv'
+            'shanghai_qvix': 'shanghai_qvix.csv',
+            'buffett_index': None,  # 通过API实时获取
+            'stock_bond_spread': None  # 通过API实时获取
         }
 
         if data_type not in file_mapping:
             return jsonify({'error': '不支持的数据类型'}), 400
 
-        file_path = os.path.join(data_dir, file_mapping[data_type])
-
-        if not os.path.exists(file_path):
-            return jsonify({'error': '数据文件不存在，请先运行数据下载脚本'}), 404
-
-        # 读取CSV数据
-        df = pd.read_csv(file_path)
+        # 特殊处理：通过API实时获取的数据
+        if data_type == 'buffett_index':
+            import akshare as ak
+            try:
+                df = ak.stock_buffett_index_lg()
+            except Exception as e:
+                return jsonify({'error': f'获取巴菲特指标数据失败: {str(e)}'}), 500
+        elif data_type == 'stock_bond_spread':
+            import akshare as ak
+            try:
+                df = ak.stock_ebs_lg()
+            except Exception as e:
+                return jsonify({'error': f'获取股债利差数据失败: {str(e)}'}), 500
+        else:
+            file_path = os.path.join(data_dir, file_mapping[data_type])
+            if not os.path.exists(file_path):
+                return jsonify({'error': '数据文件不存在，请先运行数据下载脚本'}), 404
+            # 读取CSV数据
+            df = pd.read_csv(file_path)
 
         # 转换为前端需要的格式
         result = []
@@ -464,6 +478,24 @@ def get_fundamentals_data(data_type):
                 result.append({
                     'date': row['date'],
                     'value': float(row['close'])
+                })
+        elif data_type == 'buffett_index':
+            # 巴菲特指标数据，返回三个指标
+            for _, row in df.iterrows():
+                result.append({
+                    'date': row['日期'],
+                    'close_price': float(row['收盘价']),
+                    'ten_year_percentile': float(row['近十年分位数']) * 100,  # 转换为百分比
+                    'total_percentile': float(row['总历史分位数']) * 100      # 转换为百分比
+                })
+        elif data_type == 'stock_bond_spread':
+            # 股债利差数据，返回三个指标
+            for _, row in df.iterrows():
+                result.append({
+                    'date': row['日期'],
+                    'hs300_index': float(row['沪深300指数']),
+                    'spread': float(row['股债利差']) * 100,  # 转换为百分比
+                    'spread_ma': float(row['股债利差均线']) * 100  # 转换为百分比
                 })
         else:
             # PE/PB数据

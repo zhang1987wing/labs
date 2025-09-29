@@ -48,6 +48,41 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .chart-loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+
         .chart-title {
             text-align: center;
             font-size: 1.2em;
@@ -162,6 +197,10 @@
 
         <!-- 图表1：中证全A指数 vs 上证主板市盈率 -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart1">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">中证全A指数 vs 上证主板市盈率</div>
             <div class="legend">
                 <div class="legend-item">
@@ -178,6 +217,10 @@
 
         <!-- 图表2：中证全A指数 vs 深证主板PE -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart2">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">中证全A指数 vs 深证主板市盈率</div>
             <div class="legend">
                 <div class="legend-item">
@@ -194,6 +237,10 @@
 
         <!-- 图表3：中证全A指数 vs 创业板市盈率 -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart3">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">中证全A指数 vs 创业板市盈率</div>
             <div class="legend">
                 <div class="legend-item">
@@ -210,6 +257,10 @@
 
         <!-- 图表4：中证全A指数 vs 新开户账户数 -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart4">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">中证全A指数 vs 新开户账户数</div>
             <div class="legend">
                 <div class="legend-item">
@@ -226,6 +277,10 @@
 
         <!-- 图表5：上证指数 vs 上证拥挤度 -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart5">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">上证指数 vs 上证拥挤度</div>
             <div class="legend">
                 <div class="legend-item">
@@ -242,6 +297,10 @@
 
         <!-- 图表6：创业板指数 vs 创业板QVIX -->
         <div class="chart-container">
+            <div class="chart-loading" id="loading-chart6">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
             <div class="chart-title">创业板指数 vs 创业板QVIX</div>
             <div class="legend">
                 <div class="legend-item">
@@ -254,6 +313,54 @@
                 </div>
             </div>
             <canvas id="chart6"></canvas>
+        </div>
+
+        <!-- 图表7：巴菲特指标 -->
+        <div class="chart-container">
+            <div class="chart-loading" id="loading-chart7">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
+            <div class="chart-title">巴菲特指标</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>收盘价</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ef4444;"></div>
+                    <span>近十年分位数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #22c55e;"></div>
+                    <span>总历史分位数</span>
+                </div>
+            </div>
+            <canvas id="chart7"></canvas>
+        </div>
+
+        <!-- 图表8：股债利差 -->
+        <div class="chart-container">
+            <div class="chart-loading" id="loading-chart8">
+                <div class="spinner"></div>
+                <div class="loading-text">正在加载数据...</div>
+            </div>
+            <div class="chart-title">股债利差</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>沪深300指数</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ef4444;"></div>
+                    <span>股债利差</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #22c55e;"></div>
+                    <span>股债利差均线</span>
+                </div>
+            </div>
+            <canvas id="chart8"></canvas>
         </div>
 
         <div class="text-center mt-4">
@@ -274,8 +381,8 @@
 
             async init() {
                 try {
-                    await this.loadAllData();
-                    this.createAllCharts();
+                    // 异步加载数据并创建图表
+                    this.loadDataAndCreateCharts();
                     this.updateTime();
                 } catch (error) {
                     console.error('初始化失败:', error);
@@ -287,7 +394,7 @@
                 const dataTypes = [
                     'csi_all', 'shanghai_pe', 'shenzhen_pe', 'cyb_pe', 'account_increase',
                     'shanghai_congestion', 'cyb_qvix', 'shanghai_index', 'cyb_index',
-                    'shanghai_index_from_congestion'
+                    'shanghai_index_from_congestion', 'buffett_index', 'stock_bond_spread'
                 ];
 
                 for (const type of dataTypes) {
@@ -309,6 +416,147 @@
                 console.log('数据加载完成，开始创建图表');
             }
 
+            async loadDataAndCreateCharts() {
+                // 定义图表配置，包括依赖的数据类型
+                const chartConfigs = [
+                    {
+                        chartId: 'chart1',
+                        dependencies: ['csi_all', 'shanghai_pe'],
+                        createChart: () => this.createSyncedChart('chart1', [
+                            { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                            { dataKey: 'shanghai_pe', label: '上证PE', type: 'ratio', color: '#ef4444', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart2',
+                        dependencies: ['csi_all', 'shenzhen_pe'],
+                        createChart: () => this.createSyncedChart('chart2', [
+                            { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                            { dataKey: 'shenzhen_pe', label: '深证PE', type: 'ratio', color: '#10b981', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart3',
+                        dependencies: ['csi_all', 'cyb_pe'],
+                        createChart: () => this.createSyncedChart('chart3', [
+                            { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                            { dataKey: 'cyb_pe', label: '创业板PE', type: 'ratio', color: '#8b5cf6', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart4',
+                        dependencies: ['csi_all', 'account_increase'],
+                        createChart: () => this.createSyncedChart('chart4', [
+                            { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                            { dataKey: 'account_increase', label: '新开户账户数', type: 'account', color: '#f59e0b', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart5',
+                        dependencies: ['shanghai_index_from_congestion', 'shanghai_congestion'],
+                        createChart: () => this.createSyncedChart('chart5', [
+                            { dataKey: 'shanghai_index_from_congestion', label: '上证指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
+                            { dataKey: 'shanghai_congestion', label: '上证拥挤度', type: 'congestion', color: '#22c55e', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart6',
+                        dependencies: ['cyb_index', 'cyb_qvix'],
+                        createChart: () => this.createSyncedChart('chart6', [
+                            { dataKey: 'cyb_index', label: '创业板指数', type: 'index', color: '#8b5cf6', yAxisID: 'y' },
+                            { dataKey: 'cyb_qvix', label: '创业板QVIX', type: 'qvix', color: '#f59e0b', yAxisID: 'y1' }
+                        ])
+                    },
+                    {
+                        chartId: 'chart7',
+                        dependencies: ['buffett_index'],
+                        createChart: () => this.createBuffettChart('chart7', 'buffett_index')
+                    },
+                    {
+                        chartId: 'chart8',
+                        dependencies: ['stock_bond_spread'],
+                        createChart: () => this.createStockBondChart('chart8', 'stock_bond_spread')
+                    }
+                ];
+
+                // 异步加载每个图表的数据
+                chartConfigs.forEach(config => {
+                    this.loadChartData(config);
+                });
+            }
+
+            async loadChartData(chartConfig) {
+                const { chartId, dependencies, createChart } = chartConfig;
+
+                try {
+                    // 显示loading
+                    this.showLoading(chartId);
+
+                    // 并行加载所需的数据
+                    const loadPromises = dependencies.map(dataType => this.loadSingleDataType(dataType));
+                    await Promise.all(loadPromises);
+
+                    // 隐藏loading
+                    this.hideLoading(chartId);
+
+                    // 创建图表
+                    createChart();
+
+                    console.log(`图表 ${chartId} 创建完成`);
+                } catch (error) {
+                    console.error(`图表 ${chartId} 创建失败:`, error);
+                    this.hideLoading(chartId);
+                    this.showChartError(chartId, `图表加载失败: ${error.message}`);
+                }
+            }
+
+            async loadSingleDataType(dataType) {
+                // 如果数据已存在，直接返回
+                if (this.data[dataType]) {
+                    return this.data[dataType];
+                }
+
+                try {
+                    const response = await fetch(`/api/fundamentals/data/${dataType}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    this.data[dataType] = result.data;
+                    console.log(`${dataType} 数据加载完成，数据量:`, result.data.length);
+                    return result.data;
+                } catch (error) {
+                    console.error(`加载${dataType}数据失败:`, error);
+                    throw error;
+                }
+            }
+
+            showLoading(chartId) {
+                const loadingEl = document.getElementById(`loading-${chartId}`);
+                if (loadingEl) {
+                    loadingEl.classList.remove('hidden');
+                }
+            }
+
+            hideLoading(chartId) {
+                const loadingEl = document.getElementById(`loading-${chartId}`);
+                if (loadingEl) {
+                    loadingEl.classList.add('hidden');
+                }
+            }
+
+            showChartError(chartId, message) {
+                const loadingEl = document.getElementById(`loading-${chartId}`);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `
+                        <div style="color: #ef4444; text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                            <div>${message}</div>
+                        </div>
+                    `;
+                }
+            }
+
             logDatasetInfo() {
                 // 记录所有数据集的基本信息
                 Object.keys(this.data).forEach(dataType => {
@@ -322,46 +570,7 @@
                 });
             }
 
-            createAllCharts() {
-                // 记录数据集信息
-                this.logDatasetInfo();
-
-                // 图表1: 中证全A vs 上证PE
-                this.createSyncedChart('chart1', [
-                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
-                    { dataKey: 'shanghai_pe', label: '上证PE', type: 'ratio', color: '#ef4444', yAxisID: 'y1' }
-                ]);
-
-                // 图表2: 中证全A vs 深证PE
-                this.createSyncedChart('chart2', [
-                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
-                    { dataKey: 'shenzhen_pe', label: '深证PE', type: 'ratio', color: '#10b981', yAxisID: 'y1' }
-                ]);
-
-                // 图表3: 中证全A vs 创业板PE
-                this.createSyncedChart('chart3', [
-                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
-                    { dataKey: 'cyb_pe', label: '创业板PE', type: 'ratio', color: '#8b5cf6', yAxisID: 'y1' }
-                ]);
-
-                // 图表4: 中证全A vs 新开户账户数
-                this.createSyncedChart('chart4', [
-                    { dataKey: 'csi_all', label: '中证全A指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
-                    { dataKey: 'account_increase', label: '新开户账户数', type: 'account', color: '#f59e0b', yAxisID: 'y1' }
-                ]);
-
-                // 图表5: 上证指数 vs 上证拥挤度
-                this.createSyncedChart('chart5', [
-                    { dataKey: 'shanghai_index_from_congestion', label: '上证指数', type: 'index', color: '#3b82f6', yAxisID: 'y' },
-                    { dataKey: 'shanghai_congestion', label: '上证拥挤度', type: 'congestion', color: '#22c55e', yAxisID: 'y1' }
-                ]);
-
-                // 图表6: 创业板指数 vs 创业板QVIX
-                this.createSyncedChart('chart6', [
-                    { dataKey: 'cyb_index', label: '创业板指数', type: 'index', color: '#8b5cf6', yAxisID: 'y' },
-                    { dataKey: 'cyb_qvix', label: '创业板QVIX', type: 'qvix', color: '#f59e0b', yAxisID: 'y1' }
-                ]);
-            }
+            // 已移动到异步加载中，不再需要此方法
 
             createSyncedChart(canvasId, datasetConfigs) {
                 // 为当前图表计算最长时间范围
@@ -405,6 +614,358 @@
                 this.createChart(canvasId, syncedDatasets);
             }
 
+            createBuffettChart(canvasId, dataKey) {
+                const dataset = this.data[dataKey];
+                if (!dataset || dataset.length === 0) {
+                    console.error(`没有找到 ${dataKey} 数据`);
+                    return;
+                }
+
+                const ctx = document.getElementById(canvasId).getContext('2d');
+
+                // 销毁已存在的图表
+                if (this.charts[canvasId]) {
+                    this.charts[canvasId].destroy();
+                }
+
+                // 准备三条曲线的数据
+                const closeData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.close_price
+                })).sort((a, b) => a.x - b.x);
+
+                const tenYearData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.ten_year_percentile
+                })).sort((a, b) => a.x - b.x);
+
+                const totalData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.total_percentile
+                })).sort((a, b) => a.x - b.x);
+
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [
+                            {
+                                label: '收盘价',
+                                data: closeData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: '#3b82f620',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            },
+                            {
+                                label: '近十年分位数',
+                                data: tenYearData,
+                                borderColor: '#ef4444',
+                                backgroundColor: '#ef444420',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#ef4444',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            },
+                            {
+                                label: '总历史分位数',
+                                data: totalData,
+                                borderColor: '#22c55e',
+                                backgroundColor: '#22c55e20',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#22c55e',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: 'x'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                position: 'nearest',
+                                caretPadding: 20,
+                                cornerRadius: 8,
+                                titleCallback: function(context) {
+                                    if (context.length > 0) {
+                                        return new Date(context[0].parsed.x).toLocaleDateString('zh-CN');
+                                    }
+                                    return '';
+                                },
+                                labelCallback: function(context) {
+                                    const label = context.dataset.label;
+                                    let value = context.parsed.y;
+
+                                    if (label === '收盘价') {
+                                        return `${label}: ${value.toFixed(2)}`;
+                                    } else {
+                                        return `${label}: ${value.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'year',
+                                    stepSize: 2,
+                                    displayFormats: {
+                                        year: 'yyyy',
+                                        month: 'yyyy-MM'
+                                    },
+                                    tooltipFormat: 'yyyy-MM-dd'
+                                },
+                                title: {
+                                    display: true,
+                                    text: '时间',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: '收盘价',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: '分位数(%)',
+                                    padding: 10
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                min: 0,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            createStockBondChart(canvasId, dataKey) {
+                const dataset = this.data[dataKey];
+                if (!dataset || dataset.length === 0) {
+                    console.error(`没有找到 ${dataKey} 数据`);
+                    return;
+                }
+
+                const ctx = document.getElementById(canvasId).getContext('2d');
+
+                // 销毁已存在的图表
+                if (this.charts[canvasId]) {
+                    this.charts[canvasId].destroy();
+                }
+
+                // 准备三条曲线的数据
+                const indexData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.hs300_index
+                })).sort((a, b) => a.x - b.x);
+
+                const spreadData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.spread
+                })).sort((a, b) => a.x - b.x);
+
+                const spreadMaData = dataset.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: item.spread_ma
+                })).sort((a, b) => a.x - b.x);
+
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [
+                            {
+                                label: '沪深300指数',
+                                data: indexData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: '#3b82f620',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            },
+                            {
+                                label: '股债利差',
+                                data: spreadData,
+                                borderColor: '#ef4444',
+                                backgroundColor: '#ef444420',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#ef4444',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            },
+                            {
+                                label: '股债利差均线',
+                                data: spreadMaData,
+                                borderColor: '#22c55e',
+                                backgroundColor: '#22c55e20',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1',
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#22c55e',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: 'x'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                position: 'nearest',
+                                caretPadding: 20,
+                                cornerRadius: 8,
+                                titleCallback: function(context) {
+                                    if (context.length > 0) {
+                                        return new Date(context[0].parsed.x).toLocaleDateString('zh-CN');
+                                    }
+                                    return '';
+                                },
+                                labelCallback: function(context) {
+                                    const label = context.dataset.label;
+                                    let value = context.parsed.y;
+
+                                    if (label === '沪深300指数') {
+                                        return `${label}: ${value.toFixed(2)}`;
+                                    } else {
+                                        return `${label}: ${value.toFixed(3)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'year',
+                                    stepSize: 2,
+                                    displayFormats: {
+                                        year: 'yyyy',
+                                        month: 'yyyy-MM'
+                                    },
+                                    tooltipFormat: 'yyyy-MM-dd'
+                                },
+                                title: {
+                                    display: true,
+                                    text: '时间',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: '沪深300指数',
+                                    padding: 10
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: '股债利差(%)',
+                                    padding: 10
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             createChart(canvasId, datasets) {
                 const ctx = document.getElementById(canvasId).getContext('2d');
 
@@ -436,8 +997,8 @@
                         fill: false,
                         tension: 0.1,
                         yAxisID: dataset.yAxisID,
-                        pointRadius: 2, // 所有数据现在都是月度，都显示数据点
-                        pointHoverRadius: 6,
+                        pointRadius: 0, // 实线，不显示数据点
+                        pointHoverRadius: 4,
                         pointBackgroundColor: dataset.color,
                         pointBorderColor: '#fff',
                         pointBorderWidth: 1,

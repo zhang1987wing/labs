@@ -742,6 +742,18 @@ def get_index_data(symbol="000985"):
     return index_df
 
 
+# 巴菲特指标
+def get_stock_buffett_index_lg():
+    stock_buffett_index_lg_df = ak.stock_buffett_index_lg()
+    print(stock_buffett_index_lg_df)
+
+
+# 股债利差
+def get_stock_ebs_lg():
+    stock_ebs_lg_df = ak.stock_ebs_lg()
+    print(stock_ebs_lg_df)
+
+
 if __name__ == "__main__":
     # get_lhb_info('20250925')
     # get_stock_a_congestion_lg()
@@ -753,4 +765,6 @@ if __name__ == "__main__":
     # get_sw_index_third_cons("850111.SI")
     # get_stock_market_pe_lg()
     # get_stock_market_pb_lg()
-    get_index_data()
+    # get_index_data()
+    # get_stock_buffett_index_lg()
+    get_stock_ebs_lg()
