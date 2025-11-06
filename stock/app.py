@@ -23,6 +23,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import stock_indicators
 import stock_trading
 from model.stock_holding import stock_holding
+import download_fundamentals_data
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
@@ -532,6 +533,21 @@ def get_fundamentals_data(data_type):
 
     except Exception as e:
         return jsonify({'error': f'获取数据失败: {str(e)}'}), 500
+
+
+@app.route('/api/fundamentals/refresh', methods=['POST'])
+def refresh_fundamentals_data():
+    """刷新基本面数据：触发下载脚本重新拉取并生成CSV"""
+    try:
+        success, total = download_fundamentals_data.download_all_data()
+        return jsonify({
+            'status': 'ok',
+            'updated': success,
+            'total': total,
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @app.errorhandler(404)

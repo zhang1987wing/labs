@@ -173,6 +173,14 @@
 
         <div class="info-panel">
             <h5><i class="fas fa-info-circle"></i> 数据说明</h5>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-white-50">页面数据来自本地CSV或实时接口，支持一键刷新。</div>
+                <button id="refreshBtn" class="btn btn-light btn-sm">
+                    <i class="fas fa-sync-alt"></i> 刷新数据
+                    <span id="refreshSpinner" class="spinner" style="width:18px;height:18px;border-width:3px;display:none;margin-left:8px;"></span>
+                </button>
+            </div>
+            <div class="small"><span id="refreshStatus" class="text-white-50"></span></div>
             <div class="row">
                 <div class="col-md-4">
                     <ul class="mb-0">
@@ -377,6 +385,10 @@
                 this.charts = {};
                 this.data = {};
                 this.init();
+                const btn = document.getElementById('refreshBtn');
+                if (btn) {
+                    btn.addEventListener('click', () => this.refreshData());
+                }
             }
 
             async init() {
@@ -387,6 +399,50 @@
                 } catch (error) {
                     console.error('初始化失败:', error);
                     this.showError('数据加载失败，请检查数据文件是否存在');
+                }
+            }
+
+            async refreshData() {
+                const btn = document.getElementById('refreshBtn');
+                const spinner = document.getElementById('refreshSpinner');
+                const statusEl = document.getElementById('refreshStatus');
+
+                try {
+                    if (btn) { btn.disabled = true; btn.classList.add('disabled'); }
+                    if (spinner) { spinner.style.display = 'inline-block'; }
+                    if (statusEl) { statusEl.textContent = '正在刷新数据...'; }
+
+                    // 显示所有图表的loading
+                    for (let i = 1; i <= 8; i++) {
+                        this.showLoading(`chart${i}`);
+                    }
+
+                    const resp = await fetch('/api/fundamentals/refresh', { method: 'POST' });
+                    if (!resp.ok) {
+                        throw new Error(`HTTP ${resp.status}`);
+                    }
+                    const result = await resp.json();
+
+                    // 清空已有数据与图表
+                    this.data = {};
+                    Object.keys(this.charts).forEach(id => {
+                        try { this.charts[id].destroy(); } catch (e) {}
+                    });
+                    this.charts = {};
+
+                    // 重新加载并创建图表
+                    this.loadDataAndCreateCharts();
+                    this.updateTime();
+
+                    if (statusEl) {
+                        statusEl.textContent = `刷新完成：更新 ${result.updated}/${result.total} 个文件 (${result.updated_at})`;
+                    }
+                } catch (error) {
+                    console.error('刷新数据失败:', error);
+                    if (statusEl) { statusEl.textContent = `刷新失败：${error.message}`; }
+                } finally {
+                    if (btn) { btn.disabled = false; btn.classList.remove('disabled'); }
+                    if (spinner) { spinner.style.display = 'none'; }
                 }
             }
 
