@@ -252,5 +252,3 @@ if __name__ == "__main__":
         print(f"\n⚠️  部分数据下载成功 ({success}/{total})")
     else:
         print("\n❌ 数据下载失败")
-
-    print("\n下一步: 创建前端页面展示这些数据")

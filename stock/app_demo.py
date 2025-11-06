@@ -269,7 +269,7 @@ if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
     
     print("🚀 股票回测系统演示版启动中...")
-    print("📊 访问地址: http://localhost:5000")
+    print("📊 访问地址: http://localhost:6000")
     print("💡 这是演示版本，使用模拟数据进行回测")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    app.run(debug=True, host='0.0.0.0', port=6000)

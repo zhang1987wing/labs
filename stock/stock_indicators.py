@@ -757,7 +757,7 @@ def get_stock_ebs_lg():
 if __name__ == "__main__":
     # get_lhb_info('20250925')
     # get_stock_a_congestion_lg()
-    # print(get_market_qvix_index())
+    print(get_market_qvix_index())
     # get_board_industry_name_df()
     # get_stock_board_concept_name_em()
     # get_stock_board_concept_cons_em('光通信模块')
@@ -767,4 +767,4 @@ if __name__ == "__main__":
     # get_stock_market_pb_lg()
     # get_index_data()
     # get_stock_buffett_index_lg()
-    get_stock_ebs_lg()
+    # get_stock_ebs_lg()
